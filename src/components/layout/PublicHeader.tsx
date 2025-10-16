@@ -34,15 +34,15 @@ const PublicHeader: React.FC = () => {
               <Home className="h-4 w-4 mr-2" />
               Print Station
             </Button>
-            {isAuthenticated && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate(ROUTES.APP.PRINT_JOBS)}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                My Print Jobs
-              </Button>
-            )}
+            {/* {isAuthenticated && ( */}
+            <Button
+              variant="ghost"
+              onClick={() => navigate(ROUTES.APP.PRINT_JOBS)}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              My Print Jobs
+            </Button>
+            {/* )} */}
           </nav>
 
           {/* Auth Actions */}

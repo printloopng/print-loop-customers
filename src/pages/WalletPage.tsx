@@ -123,7 +123,7 @@ const WalletPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-3xl font-bold text-gray-900">
-                  ${balance.toFixed(2)}
+                  ₦{balance.toFixed(2)}
                 </p>
                 <p className="text-sm text-gray-500">Available balance</p>
               </div>
@@ -170,7 +170,7 @@ const WalletPage: React.FC = () => {
                     size="sm"
                     onClick={() => setAddAmount(amount.toString())}
                   >
-                    ${amount}
+                    ₦{amount}
                   </Button>
                 ))}
               </div>
@@ -211,7 +211,7 @@ const WalletPage: React.FC = () => {
                         transaction.type
                       )}`}
                     >
-                      {transaction.amount > 0 ? "+" : ""}$
+                      {transaction.amount > 0 ? "+" : ""}₦
                       {Math.abs(transaction.amount).toFixed(2)}
                     </p>
                     <Badge
