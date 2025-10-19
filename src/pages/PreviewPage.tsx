@@ -41,7 +41,6 @@ const PreviewPage: React.FC = () => {
   const [zoom, setZoom] = useState(100);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  // Mock data - in real app, this would come from Redux/context
   const printJob: PrintJob = {
     id: "job_001",
     fileName: "document.pdf",
@@ -96,11 +95,9 @@ const PreviewPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Document Preview */}
           <div className="lg:col-span-3">
             <ReusableCard title="Document Preview">
               <div className="space-y-4">
-                {/* Preview Controls */}
                 <div className="flex items-center justify-between border-b pb-4">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
@@ -136,7 +133,6 @@ const PreviewPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Document Viewer */}
                 <div className="border rounded-lg bg-white p-8 min-h-[600px] flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-64 h-80 bg-gray-100 rounded-lg flex items-center justify-center mb-4 mx-auto">
@@ -157,7 +153,6 @@ const PreviewPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Page Navigation */}
                 <div className="flex items-center justify-between">
                   <Button
                     variant="outline"
@@ -187,7 +182,6 @@ const PreviewPage: React.FC = () => {
             </ReusableCard>
           </div>
 
-          {/* Print Summary */}
           <div className="space-y-6">
             <ReusableCard title="Print Summary">
               <div className="space-y-4">
@@ -258,7 +252,6 @@ const PreviewPage: React.FC = () => {
               </div>
             </ReusableCard>
 
-            {/* Action Buttons */}
             <div className="space-y-3">
               <Button
                 onClick={handleProceedToPayment}

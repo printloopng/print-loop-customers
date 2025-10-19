@@ -68,7 +68,6 @@ const WalletPage: React.FC = () => {
     if (!addAmount || parseFloat(addAmount) <= 0) return;
 
     setIsAdding(true);
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     setBalance((prev) => prev + parseFloat(addAmount));
@@ -115,7 +114,6 @@ const WalletPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Balance Card */}
           <ReusableCard title="Account Balance" className="lg:col-span-1">
             <div className="text-center space-y-4">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
@@ -136,7 +134,6 @@ const WalletPage: React.FC = () => {
             </div>
           </ReusableCard>
 
-          {/* Add Funds */}
           <ReusableCard title="Add Funds" className="lg:col-span-2">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -182,7 +179,6 @@ const WalletPage: React.FC = () => {
           </ReusableCard>
         </div>
 
-        {/* Transaction History */}
         <ReusableCard title="Transaction History" className="mt-8">
           <div className="space-y-4">
             {transactions.length === 0 ? (
@@ -233,7 +229,6 @@ const WalletPage: React.FC = () => {
           </div>
         </ReusableCard>
 
-        {/* Wallet Benefits */}
         <ReusableCard title="Wallet Benefits" className="mt-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">

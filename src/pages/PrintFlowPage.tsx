@@ -61,14 +61,11 @@ const PrintFlowPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  // Flow state
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Upload state
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Print options state
   const [options, setOptions] = useState<PrintOptions>({
     paperSize: "A4",
     orientation: "portrait",
@@ -81,7 +78,6 @@ const PrintFlowPage: React.FC = () => {
   });
   const [customPageRange, setCustomPageRange] = useState("");
 
-  // Preview state
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
 
@@ -185,7 +181,6 @@ const PrintFlowPage: React.FC = () => {
 
       setUploadedFiles((prev) => [...prev, newFile]);
 
-      // Simulate upload progress
       const interval = setInterval(() => {
         setUploadedFiles((prev) =>
           prev.map((f) =>

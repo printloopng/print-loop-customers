@@ -83,7 +83,6 @@ const UploadPage: React.FC = () => {
 
       setUploadedFiles((prev) => [...prev, newFile]);
 
-      // Simulate upload progress
       const interval = setInterval(() => {
         setUploadedFiles((prev) =>
           prev.map((f) =>
@@ -113,7 +112,7 @@ const UploadPage: React.FC = () => {
     onDrop,
     accept: acceptedFileTypes,
     multiple: true,
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: 50 * 1024 * 1024,
   });
 
   const removeFile = (fileId: string) => {
@@ -125,7 +124,6 @@ const UploadPage: React.FC = () => {
       (f) => f.status === "completed"
     );
     if (completedFiles.length > 0) {
-      // Store files in Redux or context for next step
       navigate("/print-options");
     }
   };
@@ -147,7 +145,6 @@ const UploadPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Upload Area */}
             <ReusableCard
               title="Upload Files"
               description="Drag and drop or click to select files"
@@ -179,7 +176,6 @@ const UploadPage: React.FC = () => {
               </div>
             </ReusableCard>
 
-            {/* File List */}
             <ReusableCard
               title="Uploaded Files"
               description={`${completedFiles.length} files ready`}
@@ -233,7 +229,6 @@ const UploadPage: React.FC = () => {
             </ReusableCard>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-between items-center mt-8">
             <Button
               variant="outline"

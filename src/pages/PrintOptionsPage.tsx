@@ -69,17 +69,15 @@ const PrintOptionsPage: React.FC = () => {
   ];
 
   const calculatePrice = () => {
-    let basePrice = 0.1; // Base price per page
-    let totalPages = 1; // Default, would be calculated from actual document
+    let basePrice = 0.1;
+    let totalPages = 1;
 
-    // Color pricing
     if (options.colorType === "color") {
       basePrice = 0.25;
     } else if (options.colorType === "grayscale") {
       basePrice = 0.15;
     }
 
-    // Paper size multiplier
     const sizeMultiplier = {
       A5: 0.7,
       A4: 1.0,
@@ -91,12 +89,10 @@ const PrintOptionsPage: React.FC = () => {
     basePrice *=
       sizeMultiplier[options.paperSize as keyof typeof sizeMultiplier] || 1.0;
 
-    // Duplex reduces page count
     if (options.duplex !== "none") {
       totalPages = Math.ceil(totalPages / 2);
     }
 
-    // Staple fee
     const stapleFee = options.staple ? 0.05 : 0;
 
     const totalPrice = basePrice * totalPages * options.copies + stapleFee;
@@ -104,7 +100,6 @@ const PrintOptionsPage: React.FC = () => {
   };
 
   const handleContinue = () => {
-    // Store options in Redux or context
     navigate("/preview");
   };
 
@@ -119,9 +114,7 @@ const PrintOptionsPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Print Options */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Basic Settings */}
               <ReusableCard title="Basic Settings">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -212,7 +205,6 @@ const PrintOptionsPage: React.FC = () => {
                 </div>
               </ReusableCard>
 
-              {/* Advanced Settings */}
               <ReusableCard title="Advanced Settings">
                 <div className="space-y-6">
                   <div className="space-y-2">
@@ -304,7 +296,6 @@ const PrintOptionsPage: React.FC = () => {
               </ReusableCard>
             </div>
 
-            {/* Price Summary */}
             <div className="space-y-6">
               <ReusableCard title="Order Summary">
                 <div className="space-y-4">
