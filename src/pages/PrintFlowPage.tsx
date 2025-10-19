@@ -215,7 +215,7 @@ const PrintFlowPage: React.FC = () => {
     onDrop,
     accept: acceptedFileTypes,
     multiple: true,
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: 50 * 1024 * 1024,
   });
 
   const removeFile = (fileId: string) => {
@@ -223,7 +223,7 @@ const PrintFlowPage: React.FC = () => {
   };
 
   const calculatePrice = () => {
-    let basePrice = 50; // Base price in Naira
+    let basePrice = 50;
     let totalPages = 1;
 
     if (options.colorType === "color") {
@@ -273,6 +273,7 @@ const PrintFlowPage: React.FC = () => {
   };
 
   const completedFiles = uploadedFiles.filter((f) => f.status === "completed");
+
   const canProceedToNext = () => {
     switch (currentStep) {
       case 1:
@@ -597,13 +598,13 @@ const PrintFlowPage: React.FC = () => {
                       <Badge variant="outline">Yes</Badge>
                     </div>
                   )}
-                   <hr />
-                   <div className="flex justify-between text-lg font-semibold">
-                     <span>Total:</span>
-                     <span>₦{calculatePrice().toLocaleString()}</span>
-                   </div>
-                 </div>
-               </ReusableCard>
+                  <hr />
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Total:</span>
+                    <span>₦{calculatePrice().toLocaleString()}</span>
+                  </div>
+                </div>
+              </ReusableCard>
             </div>
           </div>
         );
@@ -761,17 +762,17 @@ const PrintFlowPage: React.FC = () => {
                     )}
                   </div>
 
-                   <hr />
+                  <hr />
 
-                   <div className="flex justify-between text-lg font-semibold">
-                     <span>Total:</span>
-                     <span>₦{calculatePrice().toLocaleString()}</span>
-                   </div>
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Total:</span>
+                    <span>₦{calculatePrice().toLocaleString()}</span>
+                  </div>
 
-                   <div className="flex items-center gap-2 text-sm">
-                     <CheckCircle className="h-4 w-4 text-green-500" />
-                     <span className="text-green-700">Ready to print</span>
-                   </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-green-700">Ready to print</span>
+                  </div>
                 </div>
               </ReusableCard>
             </div>
