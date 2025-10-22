@@ -39,7 +39,7 @@ const PreviewPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { accessToken } = useAppSelector((state) => state.auth);
 
   const printJob: PrintJob = {
     id: "job_001",
@@ -77,7 +77,7 @@ const PreviewPage: React.FC = () => {
   };
 
   const handleProceedToPayment = () => {
-    if (isAuthenticated) {
+    if (accessToken) {
       navigate(ROUTES.APP.PAYMENT);
     } else {
       navigate(ROUTES.AUTH.LOGIN);
@@ -258,7 +258,7 @@ const PreviewPage: React.FC = () => {
                 className="w-full"
                 size="lg"
               >
-                {isAuthenticated ? (
+                {accessToken ? (
                   "Proceed to Payment"
                 ) : (
                   <>
@@ -281,7 +281,7 @@ const PreviewPage: React.FC = () => {
               >
                 Upload New Document
               </Button>
-              {isAuthenticated && (
+              {accessToken && (
                 <Button
                   variant="ghost"
                   onClick={() => navigate(ROUTES.APP.PRINT_JOBS)}

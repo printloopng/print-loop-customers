@@ -1,5 +1,3 @@
-import { PermissionEnum } from "@/constants/enums";
-
 export interface User {
   id: string;
   email: string;
@@ -8,14 +6,12 @@ export interface User {
   role: {
     name: "broker" | "dispatcher" | "company";
   };
-  permissions: PermissionEnum[];
 }
 
 export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   user: User | null;
-  permissions: PermissionEnum[];
 }
 
 export interface LoginCredentials {

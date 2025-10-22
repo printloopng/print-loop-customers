@@ -46,7 +46,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout;
+  let timeout: any;
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {
       clearTimeout(timeout);
@@ -109,62 +109,11 @@ export const storage = {
   },
 };
 
-// Validation helpers
-export const validation = {
-  email: (email: string): boolean => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  },
-
-  password: (password: string): boolean => {
-    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
-    return re.test(password);
-  },
-
-  phone: (phone: string): boolean => {
-    const re = /^[\+]?[1-9][\d]{0,15}$/;
-    return re.test(phone.replace(/\s/g, ""));
-  },
-};
-
-// Currency formatting
-export const formatCurrency = (
-  amount: number,
-  currency: string = "USD"
-): string => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency,
-  }).format(amount);
-};
-
-// Number formatting
 export const formatNumber = (
   number: number,
   options: Intl.NumberFormatOptions = {}
 ): string => {
   return new Intl.NumberFormat("en-US", options).format(number);
-};
-
-// Generate Google Maps URL with route
-export const generateGoogleMapsUrl = (
-  pickupAddress: string,
-  deliveryAddress: string
-): string => {
-  const baseUrl = "https://www.google.com/maps/dir/";
-  const encodedPickup = encodeURIComponent(pickupAddress);
-  const encodedDelivery = encodeURIComponent(deliveryAddress);
-  return `${baseUrl}${encodedPickup}/${encodedDelivery}`;
-};
-
-// Open Google Maps in new tab
-export const openInGoogleMaps = (
-  pickupAddress: string,
-  deliveryAddress: string
-): void => {
-  const url = generateGoogleMapsUrl(pickupAddress, deliveryAddress);
-  window.open(url, "_blank", "noopener,noreferrer");
 };
 
 export const formatToGMT = (dateTime: string | Date): string => {
