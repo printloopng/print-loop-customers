@@ -15,7 +15,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import ReusableCard from "@/components/ui/cards";
 import { Badge } from "@/components/ui/badge";
-import PublicHeader from "@/components/layout/PublicHeader";
 
 interface PrintOptions {
   paperSize: string;
@@ -104,8 +103,7 @@ const PrintOptionsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <PublicHeader />
+ 
       <div className="py-8">
         <div className="max-w-6xl mx-auto px-4">
           <div className="mb-8">
@@ -355,7 +353,7 @@ const PrintOptionsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+
   );
 };
 

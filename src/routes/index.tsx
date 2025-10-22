@@ -6,10 +6,7 @@ import IndexRoutes from "./index.routes";
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Auth Routes */}
       <Route path="/auth/*" element={<AuthRoutes />} />
-
-      {/* Main App Routes */}
       <Route path="/*" element={<IndexRoutes />} />
     </Routes>
   );

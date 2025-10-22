@@ -6,7 +6,6 @@ export const ROUTES = {
     FORGOT_PASSWORD: "/auth/forgot-password",
   },
 
-  // Main app routes
   APP: {
     DASHBOARD: "/dashboard",
     UPLOAD: "/upload",

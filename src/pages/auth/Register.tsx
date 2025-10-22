@@ -1,59 +1,59 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { registerUser, clearError } from "@/store/slices/authSlice";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { useRegisterMutation } from "@/store/services/authSlice";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ReusableCard from "@/components/ui/cards";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
-const RegisterPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const [register, { isLoading }] = useRegisterMutation();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const validationSchema = Yup.object({
+    name: Yup.string()
+      .min(2, "Name must be at least 2 characters")
+      .required("Name is required"),
+    email: Yup.string()
+      .email("Invalid email address")
+      .required("Email is required"),
+    password: Yup.string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password")], "Passwords must match")
+      .required("Confirm password is required"),
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch(clearError());
-
-    if (formData.password !== formData.confirmPassword) {
-      // You could dispatch an error action here
-      return;
-    }
-
-    try {
-      await dispatch(
-        registerUser({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        })
-      ).unwrap();
-      navigate(ROUTES.APP.DASHBOARD);
-    } catch {
-      // Error is handled by Redux state
-    }
-  };
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        await register({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+        }).unwrap();
+        navigate(ROUTES.APP.DASHBOARD);
+      } catch {
+        toast.error("Registration failed. Please try again.");
+      }
+    },
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -63,13 +63,7 @@ const RegisterPage: React.FC = () => {
         className="w-full max-w-md"
       >
         <div className="flex flex-col gap-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
+          <form className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -77,11 +71,14 @@ const RegisterPage: React.FC = () => {
                 name="name"
                 type="text"
                 placeholder="Enter your full name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
                 disabled={isLoading}
               />
+              {formik.touched.name && formik.errors.name && (
+                <p className="text-sm text-red-600">{formik.errors.name}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -91,11 +88,14 @@ const RegisterPage: React.FC = () => {
                 name="email"
                 type="email"
                 placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
                 disabled={isLoading}
               />
+              {formik.touched.email && formik.errors.email && (
+                <p className="text-sm text-red-600">{formik.errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -106,9 +106,9 @@ const RegisterPage: React.FC = () => {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   disabled={isLoading}
                 />
                 <Button
@@ -126,6 +126,9 @@ const RegisterPage: React.FC = () => {
                   )}
                 </Button>
               </div>
+              {formik.touched.password && formik.errors.password && (
+                <p className="text-sm text-red-600">{formik.errors.password}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -136,9 +139,9 @@ const RegisterPage: React.FC = () => {
                   name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  required
+                  value={formik.values.confirmPassword}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   disabled={isLoading}
                 />
                 <Button
@@ -156,18 +159,22 @@ const RegisterPage: React.FC = () => {
                   )}
                 </Button>
               </div>
+              {formik.touched.confirmPassword &&
+                formik.errors.confirmPassword && (
+                  <p className="text-sm text-red-600">
+                    {formik.errors.confirmPassword}
+                  </p>
+                )}
             </div>
           </form>
           <div className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                "Create Account"
-              )}
+            <Button
+              onClick={() => formik.handleSubmit()}
+              type="button"
+              className="w-full"
+              disabled={isLoading || !formik.isValid}
+            >
+              {isLoading ? "Creating account..." : "Create Account"}
             </Button>
 
             <div className="text-center text-sm">
@@ -186,4 +193,4 @@ const RegisterPage: React.FC = () => {
   );
 };
 
-export default RegisterPage;
+export default Register;

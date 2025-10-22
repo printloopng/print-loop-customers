@@ -1,35 +1,44 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { loginUser, clearError } from "@/store/slices/authSlice";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { useLoginMutation } from "@/store/services/authSlice";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ReusableCard from "@/components/ui/cards";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
-const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const [login, { isLoading }] = useLoginMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch(clearError());
+  const validationSchema = Yup.object({
+    email: Yup.string()
+      .email("Invalid email address")
+      .required("Email is required"),
+    password: Yup.string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
+  });
 
-    try {
-      await dispatch(loginUser({ email, password })).unwrap();
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      await login({
+        email: values.email,
+        password: values.password,
+      }).unwrap();
       navigate(ROUTES.APP.DASHBOARD);
-    } catch {
-      // Error is handled by Redux state
-    }
-  };
+    },
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -39,24 +48,22 @@ const LoginPage: React.FC = () => {
         className="w-full max-w-md"
       >
         <div className="flex flex-col gap-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
+          <form className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
                 disabled={isLoading}
               />
+              {formik.touched.email && formik.errors.email && (
+                <p className="text-sm text-red-600">{formik.errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -64,11 +71,12 @@ const LoginPage: React.FC = () => {
               <div className="relative">
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   disabled={isLoading}
                 />
                 <Button
@@ -86,18 +94,19 @@ const LoginPage: React.FC = () => {
                   )}
                 </Button>
               </div>
+              {formik.touched.password && formik.errors.password && (
+                <p className="text-sm text-red-600">{formik.errors.password}</p>
+              )}
             </div>
           </form>
-          <div className="flex flex-col  space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign in"
-              )}
+          <div className="flex flex-col space-y-4">
+            <Button
+              onClick={() => formik.handleSubmit()}
+              type="button"
+              className="w-full"
+              disabled={isLoading || !formik.isValid}
+            >
+              {isLoading ? "Signing in..." : "Sign in"}
             </Button>
 
             <div className="text-center w-full text-sm ">
@@ -126,4 +135,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage;
+export default Login;

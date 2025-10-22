@@ -13,6 +13,7 @@ import {
   QrCode,
   AlertCircle,
 } from "lucide-react";
+import { handleFormatNaira } from "@/utils/helperFunction";
 
 interface PrintJob {
   id: string;
@@ -148,143 +149,143 @@ const PrintJobsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Print Jobs</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your print jobs and track their status
-          </p>
-        </div>
+    <div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Print Jobs</h1>
+        <p className="text-gray-600 mt-2">
+          Manage your print jobs and track their status
+        </p>
+      </div>
 
-        <div className="space-y-6">
-          {jobs.length === 0 ? (
-            <ReusableCard title="No Print Jobs" className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">
-                You haven't created any print jobs yet
-              </p>
-            </ReusableCard>
-          ) : (
-            jobs.map((job) => (
-              <ReusableCard key={job.id} title={`Job #${job.id}`}>
-                <div className="space-y-4">
-                  {/* Job Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-gray-500" />
-                      <div>
-                        <p className="font-medium">{job.fileName}</p>
-                        <p className="text-sm text-gray-500">
-                          {job.fileType} • {job.fileSize} • {job.pages} pages
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(job.status)}
-                      <Badge className={getStatusColor(job.status)}>
-                        {job.status}
-                      </Badge>
+      <div className="space-y-6">
+        {jobs.length === 0 ? (
+          <ReusableCard title="No Print Jobs" className="text-center py-12">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">
+              You haven't created any print jobs yet
+            </p>
+          </ReusableCard>
+        ) : (
+          jobs.map((job) => (
+            <ReusableCard key={job.id} title={`Job #${job.id}`}>
+              <div className="space-y-4">
+                {/* Job Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-gray-500" />
+                    <div>
+                      <p className="font-medium">{job.fileName}</p>
+                      <p className="text-sm text-gray-500">
+                        {job.fileType} • {job.fileSize} • {job.pages} pages
+                      </p>
                     </div>
                   </div>
-
-                  {/* Job Details */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Copies</p>
-                      <p className="font-medium">{job.copies}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Paper Size</p>
-                      <p className="font-medium">{job.options.paperSize}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Color</p>
-                      <p className="font-medium">{job.options.colorType}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Price</p>
-                      <p className="font-medium">${job.price.toFixed(2)}</p>
-                    </div>
-                  </div>
-
-                  {/* Authentication Code */}
-                  {job.authCode && job.status === "ready" && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-blue-900">
-                            Authentication Code
-                          </p>
-                          <p className="text-sm text-blue-700">
-                            Use this code at the printer to release your job
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-mono font-bold text-blue-600 mb-2">
-                            {job.authCode}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => copyAuthCode(job.authCode!)}
-                            >
-                              <Copy className="h-3 w-3 mr-1" />
-                              Copy
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <QrCode className="h-3 w-3 mr-1" />
-                              QR
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Job Actions */}
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="text-sm text-gray-500">
-                      <p>Created: {job.createdAt}</p>
-                      {job.completedAt && <p>Completed: {job.completedAt}</p>}
-                    </div>
-                    <div className="flex gap-2">
-                      {job.status === "ready" && (
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-3 w-3 mr-1" />
-                          View Details
-                        </Button>
-                      )}
-                      {job.status === "completed" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDownloadJob(job.id)}
-                        >
-                          <Download className="h-3 w-3 mr-1" />
-                          Download
-                        </Button>
-                      )}
-                      {(job.status === "pending" ||
-                        job.status === "processing") && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCancelJob(job.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(job.status)}
+                    <Badge className={getStatusColor(job.status)}>
+                      {job.status}
+                    </Badge>
                   </div>
                 </div>
-              </ReusableCard>
-            ))
-          )}
-        </div>
+
+                {/* Job Details */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-500">Copies</p>
+                    <p className="font-medium">{job.copies}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Paper Size</p>
+                    <p className="font-medium">{job.options.paperSize}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Color</p>
+                    <p className="font-medium">{job.options.colorType}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Price</p>
+                    <p className="font-medium">
+                      {handleFormatNaira(job.price)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Authentication Code */}
+                {job.authCode && job.status === "ready" && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-blue-900">
+                          Authentication Code
+                        </p>
+                        <p className="text-sm text-blue-700">
+                          Use this code at the printer to release your job
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-mono font-bold text-blue-600 mb-2">
+                          {job.authCode}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => copyAuthCode(job.authCode!)}
+                          >
+                            <Copy className="h-3 w-3 mr-1" />
+                            Copy
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <QrCode className="h-3 w-3 mr-1" />
+                            QR
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Job Actions */}
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="text-sm text-gray-500">
+                    <p>Created: {job.createdAt}</p>
+                    {job.completedAt && <p>Completed: {job.completedAt}</p>}
+                  </div>
+                  <div className="flex gap-2">
+                    {job.status === "ready" && (
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-3 w-3 mr-1" />
+                        View Details
+                      </Button>
+                    )}
+                    {job.status === "completed" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownloadJob(job.id)}
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Download
+                      </Button>
+                    )}
+                    {(job.status === "pending" ||
+                      job.status === "processing") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCancelJob(job.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </ReusableCard>
+          ))
+        )}
       </div>
     </div>
   );

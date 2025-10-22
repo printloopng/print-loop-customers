@@ -1,40 +1,41 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ReusableCard from "@/components/ui/cards";
+import { ArrowLeft, Mail } from "lucide-react";
+import { useForgotPasswordMutation } from "@/store/services/authSlice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ArrowLeft, Mail } from "lucide-react";
+import { toast } from "sonner";
 
-const ForgotPasswordPage: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+const ForgotPassword: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  const validationSchema = Yup.object({
+    email: Yup.string()
+      .email("Invalid email address")
+      .required("Email is required"),
+  });
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // In a real app, you'd make an API call to send reset email
-      if (email) {
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        await forgotPassword({ email: values.email }).unwrap();
         setIsSubmitted(true);
-      } else {
-        setError("Please enter a valid email address");
+      } catch {
+        toast.error("Failed to send reset link. Please try again.");
       }
-    } catch {
-      setError("Failed to send reset email. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+  });
 
   if (isSubmitted) {
     return (
@@ -44,7 +45,8 @@ const ForgotPasswordPage: React.FC = () => {
           description={
             <div className="flex flex-col gap-4">
               <span>
-                We've sent a password reset link to <strong>{email}</strong>
+                We've sent a password reset link to{" "}
+                <strong>{formik.values.email}</strong>
               </span>
             </div>
           }
@@ -62,7 +64,7 @@ const ForgotPasswordPage: React.FC = () => {
             <Button
               onClick={() => {
                 setIsSubmitted(false);
-                setEmail("");
+                formik.resetForm();
               }}
               variant="outline"
               className="w-full"
@@ -91,36 +93,32 @@ const ForgotPasswordPage: React.FC = () => {
         className="w-full max-w-md"
       >
         <div className="flex flex-col gap-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
+          <form className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
                 disabled={isLoading}
               />
+              {formik.touched.email && formik.errors.email && (
+                <p className="text-sm text-red-600">{formik.errors.email}</p>
+              )}
             </div>
           </form>
           <div className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending reset link...
-                </>
-              ) : (
-                "Send Reset Link"
-              )}
+            <Button
+              onClick={() => formik.handleSubmit()}
+              type="button"
+              className="w-full"
+              disabled={isLoading || !formik.isValid}
+            >
+              {isLoading ? "Sending reset link..." : "Send Reset Link"}
             </Button>
 
             <div className="text-center text-sm">
@@ -139,4 +137,4 @@ const ForgotPasswordPage: React.FC = () => {
   );
 };
 
-export default ForgotPasswordPage;
+export default ForgotPassword;

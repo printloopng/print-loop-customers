@@ -14,6 +14,7 @@ import {
   Clock,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
+import { handleFormatNaira } from "@/utils/helperFunction";
 
 interface PaymentMethod {
   id: string;
@@ -260,7 +261,7 @@ const PaymentPage: React.FC = () => {
                 <hr />
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total:</span>
-                  <span>₦{totalAmount.toLocaleString()}</span>
+                  <span>{handleFormatNaira(totalAmount)}</span>
                 </div>
               </div>
             </ReusableCard>

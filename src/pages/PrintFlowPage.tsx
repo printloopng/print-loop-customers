@@ -17,7 +17,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import ReusableCard from "@/components/ui/cards";
 import Stepper from "@/components/ui/stepper";
-import PublicHeader from "@/components/layout/PublicHeader";
+
 import { useAppSelector } from "@/hooks/redux";
 import {
   Upload,
@@ -59,7 +59,7 @@ interface PrintOptions {
 
 const PrintFlowPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { accessToken } = useAppSelector((state) => state.auth);
 
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -260,7 +260,7 @@ const PrintFlowPage: React.FC = () => {
   };
 
   const handleProceedToPayment = () => {
-    if (isAuthenticated) {
+    if (accessToken) {
       navigate(ROUTES.APP.PAYMENT);
     } else {
       navigate(ROUTES.AUTH.LOGIN);
@@ -780,60 +780,57 @@ const PrintFlowPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <PublicHeader />
-      <div className="py-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Print Station</h1>
-            <p className="text-gray-600 mt-2">
-              Upload, configure, and print your documents
-            </p>
-          </div>
+    <div className="py-8">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Print Station</h1>
+          <p className="text-gray-600 mt-2">
+            Upload, configure, and print your documents
+          </p>
+        </div>
 
-          <div className="mb-8">
-            <Stepper steps={steps} currentStep={currentStep} />
-          </div>
+        <div className="mb-8">
+          <Stepper steps={steps} currentStep={currentStep} />
+        </div>
 
-          <div className="mb-8">{renderStepContent()}</div>
+        <div className="mb-8">{renderStepContent()}</div>
 
-          <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentStep === 1}
-            >
-              Previous
-            </Button>
+        <div className="flex justify-between items-center">
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+          >
+            Previous
+          </Button>
 
-            <div className="flex gap-4">
-              {currentStep === 3 ? (
-                <Button
-                  onClick={handleProceedToPayment}
-                  disabled={!canProceedToNext()}
-                  size="lg"
-                  className="bg-black hover:bg-gray-800"
-                >
-                  {isAuthenticated ? (
-                    "Proceed to Payment"
-                  ) : (
-                    <>
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Login to Pay
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceedToNext()}
-                  size="lg"
-                  className="bg-black hover:bg-gray-800"
-                >
-                  Continue to {steps[currentStep]?.title}
-                </Button>
-              )}
-            </div>
+          <div className="flex gap-4">
+            {currentStep === 3 ? (
+              <Button
+                onClick={handleProceedToPayment}
+                disabled={!canProceedToNext()}
+                size="lg"
+                className="bg-black hover:bg-gray-800"
+              >
+                {accessToken ? (
+                  "Proceed to Payment"
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Login to Pay
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNext}
+                disabled={!canProceedToNext()}
+                size="lg"
+                className="bg-black hover:bg-gray-800"
+              >
+                Continue to {steps[currentStep]?.title}
+              </Button>
+            )}
           </div>
         </div>
       </div>
