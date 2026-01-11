@@ -1,39 +1,22 @@
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
-import ReusableCard from "@/components/ui/cards";
 import Stepper from "@/components/ui/stepper";
-
+import { toast } from "sonner";
+import { LogIn } from "lucide-react";
 import { useAppSelector } from "@/hooks/redux";
 import {
-  Upload,
-  FileText,
-  Image,
-  File,
-  X,
-  CheckCircle,
-  AlertCircle,
-  RotateCw,
-  ZoomIn,
-  ZoomOut,
-  ChevronLeft,
-  ChevronRight,
-  LogIn,
-} from "lucide-react";
+  useGetPrintOptionsQuery,
+  useCreatePrintJobMutation
+} from "@/store/services/printJobsApi";
+import { PAPER_SIZE, ORIENTATION, COLOR_TYPE, DUPLEX } from "@/types/printJob";
+import {
+  FileUploadStep,
+  OrderSummary,
+  PrintOptionsStep,
+  PreviewStep,
+  PrintSummary
+} from "@/components/print";
 import { ROUTES } from "@/constants/routes";
 
 interface UploadedFile {
@@ -47,14 +30,14 @@ interface UploadedFile {
 }
 
 interface PrintOptions {
-  paperSize: string;
-  orientation: string;
+  paperSize: PAPER_SIZE;
+  orientation: ORIENTATION;
   copies: number;
   pageRange: string;
   staple: boolean;
-  colorType: string;
+  colorType: COLOR_TYPE;
   resolution: number;
-  duplex: string;
+  duplex: DUPLEX;
 }
 
 const PrintFlowPage: React.FC = () => {
@@ -62,99 +45,60 @@ const PrintFlowPage: React.FC = () => {
   const { accessToken } = useAppSelector((state) => state.auth);
 
   const [currentStep, setCurrentStep] = useState(1);
-
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileBase64, setFileBase64] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
 
   const [options, setOptions] = useState<PrintOptions>({
-    paperSize: "A4",
-    orientation: "portrait",
+    paperSize: PAPER_SIZE.A4,
+    orientation: ORIENTATION.PORTRAIT,
     copies: 1,
     pageRange: "all",
     staple: false,
-    colorType: "color",
-    resolution: 300,
-    duplex: "none",
+    colorType: COLOR_TYPE.COLOR,
+    resolution: 600,
+    duplex: DUPLEX.SINGLE_SIDED
   });
   const [customPageRange, setCustomPageRange] = useState("");
-
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
+
+  const { data: printOptions, error: optionsError } = useGetPrintOptionsQuery();
+  const [createPrintJob, { isLoading: isCreatingJob }] =
+    useCreatePrintJobMutation();
+
+  React.useEffect(() => {
+    if (printOptions) {
+      console.log("Print options loaded:", printOptions);
+    }
+    if (optionsError) {
+      console.error("Print options error:", optionsError);
+    }
+  }, [printOptions, optionsError]);
 
   const steps = [
     {
       id: "upload",
       title: "Upload Document",
-      description: "Select your PDF or DOCX file",
+      description: "Select your PDF or DOCX file"
     },
     {
       id: "options",
       title: "Print Options",
-      description: "Choose copies and pages",
+      description: "Choose copies and pages"
     },
     {
       id: "preview",
       title: "Review & Confirm",
-      description: "Verify your settings",
+      description: "Verify your settings"
     },
     {
       id: "payment",
       title: "Your Print Code",
-      description: "Save your unique code",
-    },
+      description: "Save your unique code"
+    }
   ];
-
-  const acceptedFileTypes = {
-    "application/pdf": [".pdf"],
-    "image/jpeg": [".jpg", ".jpeg"],
-    "image/png": [".png"],
-    "image/gif": [".gif"],
-    "application/msword": [".doc"],
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
-      ".docx",
-    ],
-    "application/vnd.ms-powerpoint": [".ppt"],
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-      [".pptx"],
-    "text/plain": [".txt"],
-  };
-
-  const paperSizes = [
-    { value: "A4", label: "A4 (210 × 297 mm)" },
-    { value: "A3", label: "A3 (297 × 420 mm)" },
-    { value: "Letter", label: "Letter (8.5 × 11 in)" },
-    { value: "Legal", label: "Legal (8.5 × 14 in)" },
-    { value: "A5", label: "A5 (148 × 210 mm)" },
-  ];
-
-  const orientations = [
-    { value: "portrait", label: "Portrait" },
-    { value: "landscape", label: "Landscape" },
-  ];
-
-  const colorTypes = [
-    { value: "color", label: "Color" },
-    { value: "grayscale", label: "Grayscale" },
-    { value: "black-white", label: "Black & White" },
-  ];
-
-  const duplexOptions = [
-    { value: "none", label: "Single-sided" },
-    { value: "long-edge", label: "Double-sided (Long Edge)" },
-    { value: "short-edge", label: "Double-sided (Short Edge)" },
-  ];
-
-  const getFileIcon = (type: string) => {
-    if (type.includes("pdf"))
-      return <FileText className="h-8 w-8 text-red-500" />;
-    if (type.includes("image"))
-      return <Image className="h-8 w-8 text-blue-500" />;
-    if (type.includes("word") || type.includes("document"))
-      return <FileText className="h-8 w-8 text-blue-600" />;
-    if (type.includes("powerpoint") || type.includes("presentation"))
-      return <FileText className="h-8 w-8 text-orange-500" />;
-    return <File className="h-8 w-8 text-gray-500" />;
-  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -164,87 +108,116 @@ const PrintFlowPage: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    setIsUploading(true);
-
-    acceptedFiles.forEach((file) => {
-      const fileId = Math.random().toString(36).substr(2, 9);
-      const newFile: UploadedFile = {
-        id: fileId,
-        file,
-        preview: URL.createObjectURL(file),
-        size: file.size,
-        type: file.type,
-        status: "uploading",
-        progress: 0,
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        resolve(base64String); // Return full data URL format
       };
-
-      setUploadedFiles((prev) => [...prev, newFile]);
-
-      const interval = setInterval(() => {
-        setUploadedFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileId
-              ? {
-                  ...f,
-                  progress: Math.min(f.progress + Math.random() * 30, 100),
-                }
-              : f
-          )
-        );
-      }, 200);
-
-      setTimeout(() => {
-        clearInterval(interval);
-        setUploadedFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileId ? { ...f, status: "completed", progress: 100 } : f
-          )
-        );
-        setIsUploading(false);
-      }, 2000);
+      reader.onerror = (error) => reject(error);
     });
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    setUploadedFiles([]);
+    setSelectedFile(null);
+    setFileBase64("");
+
+    const file = acceptedFiles[0];
+    if (!file) return;
+
+    // Convert file to base64 for preview
+    const base64 = await fileToBase64(file);
+
+    const fileId = Math.random().toString(36).substr(2, 9);
+    const newFile: UploadedFile = {
+      id: fileId,
+      file,
+      preview: URL.createObjectURL(file),
+      size: file.size,
+      type: file.type,
+      status: "completed",
+      progress: 100
+    };
+
+    setUploadedFiles([newFile]);
+    setSelectedFile(file);
+    setFileBase64(base64);
+    toast.success("File selected successfully!");
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: acceptedFileTypes,
-    multiple: true,
-    maxSize: 50 * 1024 * 1024,
-  });
-
   const removeFile = (fileId: string) => {
-    setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+    setUploadedFiles((prev) =>
+      prev.filter((uploadedFile) => uploadedFile.id !== fileId)
+    );
+    setSelectedFile(null);
+    setFileBase64("");
   };
 
   const calculatePrice = () => {
-    let basePrice = 50;
-    let totalPages = 1;
-
-    if (options.colorType === "color") {
-      basePrice = 100;
-    } else if (options.colorType === "grayscale") {
-      basePrice = 75;
-    }
-
-    const sizeMultiplier = {
-      A5: 0.7,
-      A4: 1.0,
-      Letter: 1.0,
-      Legal: 1.2,
-      A3: 1.5,
+    const defaultPricing = {
+      colorPricePerPage: 25,
+      blackWhitePricePerPage: 10,
+      staplePrice: 0.05
     };
 
-    basePrice *=
-      sizeMultiplier[options.paperSize as keyof typeof sizeMultiplier] || 1.0;
+    if (!printOptions) {
+      return defaultPricing.blackWhitePricePerPage;
+    }
 
-    if (options.duplex !== "none") {
+    const colorTypeOption = printOptions.colorTypes?.find(
+      (ct) =>
+        ct.value ===
+        (options.colorType === COLOR_TYPE.COLOR ? "color" : "black_white")
+    );
+
+    const duplexOption = printOptions.duplexOptions?.find(
+      (d) =>
+        d.value ===
+        (options.duplex === DUPLEX.SINGLE_SIDED
+          ? "single_sided"
+          : options.duplex === DUPLEX.DOUBLE_SIDED_LONG_EDGE
+          ? "double_sided_long_edge"
+          : options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE
+          ? "double_sided_short_edge"
+          : "single_sided")
+    );
+
+    const staplingService = printOptions.additionalServices?.find(
+      (s) => s.name.toLowerCase() === "stapling"
+    );
+
+    const paperSizeOption = printOptions.paperSizes?.find(
+      (ps) => ps.value === options.paperSize
+    );
+
+    let pricePerPage =
+      colorTypeOption?.costPerPage ||
+      (options.colorType === COLOR_TYPE.COLOR
+        ? defaultPricing.colorPricePerPage
+        : defaultPricing.blackWhitePricePerPage);
+
+    const sizeMultiplier = paperSizeOption?.costMultiplier || 1.0;
+    pricePerPage *= sizeMultiplier;
+
+    const duplexMultiplier = duplexOption?.costMultiplier || 1.0;
+    pricePerPage *= duplexMultiplier;
+
+    let totalPages = 1;
+
+    if (options.duplex !== DUPLEX.SINGLE_SIDED) {
       totalPages = Math.ceil(totalPages / 2);
     }
 
-    const stapleFee = options.staple ? 25 : 0;
-    const totalPrice = basePrice * totalPages * options.copies + stapleFee;
-    return Math.round(totalPrice);
+    const stapleFee = options.staple
+      ? staplingService?.cost || defaultPricing.staplePrice
+      : 0;
+
+    const totalPrice = pricePerPage * totalPages * options.copies + stapleFee;
+
+    return Math.round(totalPrice * 100) / 100;
   };
 
   const handleNext = () => {
@@ -259,12 +232,48 @@ const PrintFlowPage: React.FC = () => {
     }
   };
 
-  const handleProceedToPayment = () => {
-    if (accessToken) {
-      navigate(ROUTES.APP.PAYMENT);
-    } else {
+  const handleProceedToPayment = async () => {
+    if (!accessToken) {
       navigate(ROUTES.AUTH.LOGIN);
+      return;
     }
+
+    if (!selectedFile) {
+      toast.error("Please select a file first");
+      return;
+    }
+
+    if (!fileBase64) {
+      toast.error("File data not available. Please re-select your file.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const printJob = await createPrintJob({
+        fileBase64,
+        paperSize: options.paperSize,
+        orientation: options.orientation,
+        copies: options.copies,
+        pageRange: options.pageRange === "custom" ? customPageRange : undefined,
+        staple: options.staple,
+        colorType: options.colorType,
+        resolution: options.resolution,
+        duplex: options.duplex
+      }).unwrap();
+
+      toast.success("Print job created successfully!");
+      navigate(ROUTES.APP.PAYMENT, { state: { printJobId: printJob.id } });
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to create print job");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleOptionsChange = (newOptions: Partial<PrintOptions>) => {
+    setOptions((prev) => ({ ...prev, ...newOptions }));
   };
 
   const completedFiles = uploadedFiles.filter((f) => f.status === "completed");
@@ -286,320 +295,28 @@ const PrintFlowPage: React.FC = () => {
     switch (currentStep) {
       case 1:
         return (
-          <ReusableCard
-            title="Upload Your Document"
-            description="Select a PDF or DOCX file to get started"
-          >
-            <div className="space-y-6">
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
-                  isDragActive
-                    ? "border-black bg-gray-50"
-                    : "border-gray-300 hover:border-gray-400"
-                }`}
-              >
-                <input {...getInputProps()} />
-                <Upload className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                {isDragActive ? (
-                  <p className="text-black text-lg">Drop the files here...</p>
-                ) : (
-                  <div>
-                    <p className="text-gray-600 mb-2 text-lg">
-                      Drop your document here
-                    </p>
-                    <p className="text-gray-500 mb-4">or</p>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-black text-black hover:bg-black hover:text-white"
-                    >
-                      Browse Files
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-sm text-gray-500 text-center">
-                Supports PDF, DOC, DOCX, PPT, PPTX, JPG, PNG, GIF, TXT files up
-                to 50MB
-              </p>
-
-              {uploadedFiles.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="font-medium">Uploaded Files</h3>
-                  {uploadedFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center gap-3 p-3 border rounded-lg"
-                    >
-                      {getFileIcon(file.type)}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {file.file.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatFileSize(file.size)} • {file.type}
-                        </p>
-                        {file.status === "uploading" && (
-                          <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
-                            <div
-                              className="bg-black h-1 rounded-full transition-all duration-300"
-                              style={{ width: `${file.progress}%` }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {file.status === "completed" && (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        )}
-                        {file.status === "error" && (
-                          <AlertCircle className="h-5 w-5 text-red-500" />
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(file.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </ReusableCard>
+          <FileUploadStep
+            uploadedFiles={uploadedFiles}
+            isUploading={isUploading}
+            onDrop={onDrop}
+            onRemoveFile={removeFile}
+          />
         );
 
       case 2:
         return (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
-              <ReusableCard title="Basic Settings">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="paperSize">Paper Size</Label>
-                    <Select
-                      value={options.paperSize}
-                      onValueChange={(value) =>
-                        setOptions((prev) => ({ ...prev, paperSize: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {paperSizes.map((size) => (
-                          <SelectItem key={size.value} value={size.value}>
-                            {size.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="orientation">Orientation</Label>
-                    <RadioGroup
-                      value={options.orientation}
-                      onValueChange={(value) =>
-                        setOptions((prev) => ({ ...prev, orientation: value }))
-                      }
-                    >
-                      {orientations.map((orientation) => (
-                        <div
-                          key={orientation.value}
-                          className="flex items-center space-x-2"
-                        >
-                          <RadioGroupItem
-                            value={orientation.value}
-                            id={orientation.value}
-                          />
-                          <Label htmlFor={orientation.value}>
-                            {orientation.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="copies">Number of Copies</Label>
-                    <Input
-                      id="copies"
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={options.copies}
-                      onChange={(e) =>
-                        setOptions((prev) => ({
-                          ...prev,
-                          copies: parseInt(e.target.value) || 1,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="colorType">Color Type</Label>
-                    <RadioGroup
-                      value={options.colorType}
-                      onValueChange={(value) =>
-                        setOptions((prev) => ({ ...prev, colorType: value }))
-                      }
-                    >
-                      {colorTypes.map((color) => (
-                        <div
-                          key={color.value}
-                          className="flex items-center space-x-2"
-                        >
-                          <RadioGroupItem
-                            value={color.value}
-                            id={color.value}
-                          />
-                          <Label htmlFor={color.value}>{color.label}</Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                </div>
-              </ReusableCard>
-
-              <ReusableCard title="Advanced Settings">
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label>Page Range</Label>
-                    <RadioGroup
-                      value={options.pageRange}
-                      onValueChange={(value) =>
-                        setOptions((prev) => ({ ...prev, pageRange: value }))
-                      }
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="all" id="all" />
-                        <Label htmlFor="all">All pages</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="custom" id="custom" />
-                        <Label htmlFor="custom">Custom range</Label>
-                      </div>
-                    </RadioGroup>
-                    {options.pageRange === "custom" && (
-                      <Input
-                        placeholder="e.g., 1-5, 8, 10-12"
-                        value={customPageRange}
-                        onChange={(e) => setCustomPageRange(e.target.value)}
-                      />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Resolution (DPI)</Label>
-                    <div className="px-3">
-                      <Slider
-                        value={[options.resolution]}
-                        onValueChange={(value) =>
-                          setOptions((prev) => ({
-                            ...prev,
-                            resolution: value[0],
-                          }))
-                        }
-                        min={150}
-                        max={600}
-                        step={50}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-sm text-gray-500 mt-1">
-                        <span>150 DPI</span>
-                        <span className="font-medium">
-                          {options.resolution} DPI
-                        </span>
-                        <span>600 DPI</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Duplex Printing</Label>
-                    <RadioGroup
-                      value={options.duplex}
-                      onValueChange={(value) =>
-                        setOptions((prev) => ({ ...prev, duplex: value }))
-                      }
-                    >
-                      {duplexOptions.map((duplex) => (
-                        <div
-                          key={duplex.value}
-                          className="flex items-center space-x-2"
-                        >
-                          <RadioGroupItem
-                            value={duplex.value}
-                            id={duplex.value}
-                          />
-                          <Label htmlFor={duplex.value}>{duplex.label}</Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="staple"
-                      checked={options.staple}
-                      onCheckedChange={(checked) =>
-                        setOptions((prev) => ({ ...prev, staple: !!checked }))
-                      }
-                    />
-                    <Label htmlFor="staple">Staple documents</Label>
-                  </div>
-                </div>
-              </ReusableCard>
+              <PrintOptionsStep
+                options={options}
+                customPageRange={customPageRange}
+                printOptions={printOptions}
+                onOptionsChange={handleOptionsChange}
+                onCustomPageRangeChange={setCustomPageRange}
+              />
             </div>
-
             <div className="space-y-6">
-              <ReusableCard title="Order Summary">
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>Paper Size:</span>
-                    <Badge variant="outline">{options.paperSize}</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Orientation:</span>
-                    <Badge variant="outline">{options.orientation}</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Copies:</span>
-                    <span>{options.copies}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Color:</span>
-                    <Badge variant="outline">{options.colorType}</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Resolution:</span>
-                    <span>{options.resolution} DPI</span>
-                  </div>
-                  {options.duplex !== "none" && (
-                    <div className="flex justify-between">
-                      <span>Duplex:</span>
-                      <Badge variant="outline">{options.duplex}</Badge>
-                    </div>
-                  )}
-                  {options.staple && (
-                    <div className="flex justify-between">
-                      <span>Staple:</span>
-                      <Badge variant="outline">Yes</Badge>
-                    </div>
-                  )}
-                  <hr />
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Total:</span>
-                    <span>₦{calculatePrice().toLocaleString()}</span>
-                  </div>
-                </div>
-              </ReusableCard>
+              <OrderSummary options={options} totalPrice={calculatePrice()} />
             </div>
           </div>
         );
@@ -608,168 +325,33 @@ const PrintFlowPage: React.FC = () => {
         return (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-3">
-              <ReusableCard title="Document Preview">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b pb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-gray-500" />
-                        <span className="font-medium">
-                          {completedFiles[0]?.file.name || "document.pdf"}
-                        </span>
-                        <Badge variant="outline">PDF</Badge>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setZoom((prev) => Math.max(prev - 25, 50))
-                        }
-                        disabled={zoom <= 50}
-                      >
-                        <ZoomOut className="h-4 w-4" />
-                      </Button>
-                      <span className="text-sm font-medium min-w-[60px] text-center">
-                        {zoom}%
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setZoom((prev) => Math.min(prev + 25, 200))
-                        }
-                        disabled={zoom >= 200}
-                      >
-                        <ZoomIn className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <RotateCw className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="border rounded-lg bg-white p-8 min-h-[600px] flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-64 h-80 bg-gray-100 rounded-lg flex items-center justify-center mb-4 mx-auto">
-                        <div className="text-center">
-                          <FileText className="h-16 w-16 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">
-                            Page {currentPage} of 5
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {options.orientation} • {options.paperSize}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        Document preview will be displayed here
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Previous
-                    </Button>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">
-                        Page {currentPage} of 5
-                      </span>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, 5))
-                      }
-                      disabled={currentPage === 5}
-                    >
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              </ReusableCard>
+              <PreviewStep
+                fileName={completedFiles[0]?.file.name || "document.pdf"}
+                fileBase64={fileBase64}
+                fileType={completedFiles[0]?.type || ""}
+                currentPage={currentPage}
+                totalPages={5}
+                zoom={zoom}
+                paperSize={options.paperSize}
+                orientation={options.orientation}
+                onZoomIn={() => setZoom((prev) => Math.min(prev + 25, 200))}
+                onZoomOut={() => setZoom((prev) => Math.max(prev - 25, 50))}
+                onPreviousPage={() =>
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
+                }
+                onNextPage={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, 5))
+                }
+              />
             </div>
-
             <div className="space-y-6">
-              <ReusableCard title="Print Summary">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-gray-500" />
-                    <div>
-                      <p className="font-medium">
-                        {completedFiles[0]?.file.name || "document.pdf"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {formatFileSize(completedFiles[0]?.size || 2400000)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Pages:</span>
-                      <span>5</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Copies:</span>
-                      <span>{options.copies}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Paper Size:</span>
-                      <Badge variant="outline">{options.paperSize}</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Orientation:</span>
-                      <Badge variant="outline">{options.orientation}</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Color:</span>
-                      <Badge variant="outline">{options.colorType}</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Resolution:</span>
-                      <span>{options.resolution} DPI</span>
-                    </div>
-                    {options.duplex !== "none" && (
-                      <div className="flex justify-between">
-                        <span>Duplex:</span>
-                        <Badge variant="outline">{options.duplex}</Badge>
-                      </div>
-                    )}
-                    {options.staple && (
-                      <div className="flex justify-between">
-                        <span>Staple:</span>
-                        <Badge variant="outline">Yes</Badge>
-                      </div>
-                    )}
-                  </div>
-
-                  <hr />
-
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Total:</span>
-                    <span>₦{calculatePrice().toLocaleString()}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-green-700">Ready to print</span>
-                  </div>
-                </div>
-              </ReusableCard>
+              <PrintSummary
+                fileName={completedFiles[0]?.file.name || "document.pdf"}
+                fileSize={formatFileSize(completedFiles[0]?.size || 2400000)}
+                totalPages={5}
+                options={options}
+                totalPrice={calculatePrice()}
+              />
             </div>
           </div>
         );
@@ -808,11 +390,15 @@ const PrintFlowPage: React.FC = () => {
             {currentStep === 3 ? (
               <Button
                 onClick={handleProceedToPayment}
-                disabled={!canProceedToNext()}
+                disabled={!canProceedToNext() || isCreatingJob || isUploading}
                 size="lg"
                 className="bg-black hover:bg-gray-800"
               >
-                {accessToken ? (
+                {isUploading ? (
+                  "Uploading..."
+                ) : isCreatingJob ? (
+                  "Creating..."
+                ) : accessToken ? (
                   "Proceed to Payment"
                 ) : (
                   <>

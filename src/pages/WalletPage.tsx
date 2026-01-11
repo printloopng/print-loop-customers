@@ -4,99 +4,93 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import ReusableCard from "@/components/ui/cards";
+import { toast } from "sonner";
 import {
   CreditCard,
-  Plus,
   Minus,
   History,
   DollarSign,
   Wallet,
-  ArrowUpRight,
   ArrowDownLeft,
+  Clock
 } from "lucide-react";
-
-interface Transaction {
-  id: string;
-  type: "deposit" | "withdrawal" | "payment" | "refund";
-  amount: number;
-  description: string;
-  date: string;
-  status: "completed" | "pending" | "failed";
-}
+import {
+  useFundWalletMutation,
+  useGetWalletBalanceQuery,
+  useGetWalletTransactionsQuery
+} from "@/store/services/walletApi";
+import { TRANSACTION_TYPE } from "@/types/wallet";
 
 const WalletPage: React.FC = () => {
-  const [balance, setBalance] = useState(25.5);
   const [addAmount, setAddAmount] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
+  const [page] = useState(1);
 
-  const transactions: Transaction[] = [
-    {
-      id: "1",
-      type: "deposit",
-      amount: 50.0,
-      description: "Added funds via credit card",
-      date: "2024-01-15",
-      status: "completed",
-    },
-    {
-      id: "2",
-      type: "payment",
-      amount: -2.5,
-      description: "Print job #001",
-      date: "2024-01-14",
-      status: "completed",
-    },
-    {
-      id: "3",
-      type: "refund",
-      amount: 1.25,
-      description: "Cancelled print job #002",
-      date: "2024-01-13",
-      status: "completed",
-    },
-    {
-      id: "4",
-      type: "payment",
-      amount: -5.0,
-      description: "Print job #003",
-      date: "2024-01-12",
-      status: "completed",
-    },
-  ];
+  // RTK Query hooks
+  const { data: wallet, isLoading: isLoadingBalance } =
+    useGetWalletBalanceQuery();
+  const { data: transactionsData, isLoading: isLoadingTransactions } =
+    useGetWalletTransactionsQuery({
+      page,
+      limit: 10
+    });
+  const [fundWallet, { isLoading: isFunding }] = useFundWalletMutation();
+
+  const transactions = transactionsData?.data || [];
+  const balance = wallet?.balance || 0;
 
   const handleAddFunds = async () => {
-    if (!addAmount || parseFloat(addAmount) <= 0) return;
+    const amount = parseFloat(addAmount);
 
-    setIsAdding(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!addAmount || isNaN(amount) || amount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
 
-    setBalance((prev) => prev + parseFloat(addAmount));
-    setAddAmount("");
-    setIsAdding(false);
-  };
+    if (amount < 100) {
+      toast.error("Minimum funding amount is ₦100");
+      return;
+    }
 
-  const getTransactionIcon = (type: Transaction["type"]) => {
-    switch (type) {
-      case "deposit":
-        return <ArrowDownLeft className="h-4 w-4 text-green-500" />;
-      case "withdrawal":
-        return <ArrowUpRight className="h-4 w-4 text-red-500" />;
-      case "payment":
-        return <Minus className="h-4 w-4 text-red-500" />;
-      case "refund":
-        return <Plus className="h-4 w-4 text-green-500" />;
-      default:
-        return <DollarSign className="h-4 w-4 text-gray-500" />;
+    try {
+      const result = await fundWallet({
+        amount: amount
+      }).unwrap();
+
+      if (result.authorizationUrl) {
+        window.location.href = result.authorizationUrl;
+      } else {
+        toast.success("Wallet funded successfully!");
+        setAddAmount("");
+      }
+    } catch (error: any) {
+      // Handle validation errors with details
+      if (error?.details && Array.isArray(error.details)) {
+        const validationErrors = error.details
+          .map((detail: any) => detail.message)
+          .join(", ");
+        toast.error(validationErrors);
+      } else {
+        toast.error(error?.message || "Failed to fund wallet");
+      }
     }
   };
 
-  const getTransactionColor = (type: Transaction["type"]) => {
+  const getTransactionIcon = (type: TRANSACTION_TYPE) => {
     switch (type) {
-      case "deposit":
-      case "refund":
+      case TRANSACTION_TYPE.CREDIT:
+        return <ArrowDownLeft className="h-4 w-4 text-green-500" />;
+      case TRANSACTION_TYPE.DEBIT:
+        return <Minus className="h-4 w-4 text-red-500" />;
+      default:
+        return <span className="h-4 w-4 text-gray-500 text-2xl">₦</span>;
+    }
+  };
+
+  const getTransactionColor = (type: TRANSACTION_TYPE) => {
+    switch (type) {
+      case TRANSACTION_TYPE.CREDIT:
         return "text-green-600";
-      case "withdrawal":
-      case "payment":
+      case TRANSACTION_TYPE.DEBIT:
         return "text-red-600";
       default:
         return "text-gray-600";
@@ -116,7 +110,11 @@ const WalletPage: React.FC = () => {
         <ReusableCard title="Account Balance" className="lg:col-span-1">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-              <Wallet className="h-8 w-8 text-blue-600" />
+              {isLoadingBalance ? (
+                <Clock className="h-8 w-8 text-blue-600 animate-spin" />
+              ) : (
+                <Wallet className="h-8 w-8 text-blue-600" />
+              )}
             </div>
             <div>
               <p className="text-3xl font-bold text-gray-900">
@@ -144,22 +142,22 @@ const WalletPage: React.FC = () => {
                   placeholder="0.00"
                   value={addAmount}
                   onChange={(e) => setAddAmount(e.target.value)}
-                  min="1"
+                  min="100"
                   step="0.01"
                 />
                 <Button
                   onClick={handleAddFunds}
                   disabled={
-                    !addAmount || parseFloat(addAmount) <= 0 || isAdding
+                    !addAmount || parseFloat(addAmount) <= 0 || isFunding
                   }
                 >
-                  {isAdding ? "Adding..." : "Add Funds"}
+                  {isFunding ? "Processing..." : "Add Funds"}
                 </Button>
               </div>
             </div>
 
             <div className="grid grid-cols-4 gap-2">
-              {[10, 25, 50, 100].map((amount) => (
+              {[100, 500, 1000, 2500].map((amount) => (
                 <Button
                   key={amount}
                   variant="outline"
@@ -172,7 +170,8 @@ const WalletPage: React.FC = () => {
             </div>
 
             <p className="text-sm text-gray-500">
-              Funds will be added instantly via secure payment processing
+              Minimum funding amount is ₦100. Funds will be added instantly via
+              secure payment processing.
             </p>
           </div>
         </ReusableCard>
@@ -180,22 +179,31 @@ const WalletPage: React.FC = () => {
 
       <ReusableCard title="Transaction History" className="mt-8">
         <div className="space-y-4">
-          {transactions.length === 0 ? (
+          {isLoadingTransactions ? (
+            <div className="text-center py-8 text-gray-500">
+              <Clock className="h-12 w-12 mx-auto mb-2 text-gray-300 animate-spin" />
+              <p>Loading transactions...</p>
+            </div>
+          ) : transactions.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <History className="h-12 w-12 mx-auto mb-2 text-gray-300" />
               <p>No transactions yet</p>
             </div>
           ) : (
-            transactions.map((transaction) => (
+            transactions?.map((transaction) => (
               <div
                 key={transaction.id}
                 className="flex items-center justify-between p-4 border rounded-lg"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   {getTransactionIcon(transaction.type)}
                   <div>
-                    <p className="font-medium">{transaction.description}</p>
-                    <p className="text-sm text-gray-500">{transaction.date}</p>
+                    <p className="font-medium">
+                      {transaction.description || "Transaction"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(transaction.createdAt).toLocaleString()}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -204,7 +212,7 @@ const WalletPage: React.FC = () => {
                       transaction.type
                     )}`}
                   >
-                    {transaction.amount > 0 ? "+" : ""}₦
+                    {transaction.type === TRANSACTION_TYPE.CREDIT ? "+" : "-"}₦
                     {Math.abs(transaction.amount).toFixed(2)}
                   </p>
                   <Badge

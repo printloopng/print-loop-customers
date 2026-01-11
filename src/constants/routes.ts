@@ -8,8 +8,6 @@ export const ROUTES = {
 
   APP: {
     DASHBOARD: "/dashboard",
-    UPLOAD: "/upload",
-    PRINT_OPTIONS: "/print-options",
     PREVIEW: "/preview",
     PAYMENT: "/payment",
     WALLET: "/wallet",

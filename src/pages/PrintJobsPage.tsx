@@ -2,150 +2,109 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ReusableCard from "@/components/ui/cards";
+import { toast } from "sonner";
 import {
   FileText,
   Clock,
   CheckCircle,
   X,
   Download,
-  Eye,
   Copy,
   QrCode,
-  AlertCircle,
+  AlertCircle
 } from "lucide-react";
 import { handleFormatNaira } from "@/utils/helperFunction";
-
-interface PrintJob {
-  id: string;
-  fileName: string;
-  fileType: string;
-  fileSize: string;
-  pages: number;
-  copies: number;
-  status: "pending" | "processing" | "ready" | "completed" | "cancelled";
-  createdAt: string;
-  completedAt?: string;
-  authCode?: string;
-  price: number;
-  options: {
-    paperSize: string;
-    orientation: string;
-    colorType: string;
-    resolution: number;
-    duplex: string;
-    staple: boolean;
-  };
-}
+import {
+  useGetUserPrintJobsQuery,
+  useCancelPrintJobMutation,
+  useDeletePrintJobMutation
+} from "@/store/services/printJobsApi";
+import { PRINT_STATUS } from "@/types/printJob";
 
 const PrintJobsPage: React.FC = () => {
-  const [jobs] = useState<PrintJob[]>([
-    {
-      id: "job_001",
-      fileName: "document.pdf",
-      fileType: "PDF",
-      fileSize: "2.4 MB",
-      pages: 5,
-      copies: 2,
-      status: "ready",
-      createdAt: "2024-01-15 10:30",
-      authCode: "123456",
-      price: 2.5,
-      options: {
-        paperSize: "A4",
-        orientation: "portrait",
-        colorType: "color",
-        resolution: 300,
-        duplex: "none",
-        staple: true,
-      },
-    },
-    {
-      id: "job_002",
-      fileName: "presentation.pptx",
-      fileType: "PPTX",
-      fileSize: "5.2 MB",
-      pages: 12,
-      copies: 1,
-      status: "processing",
-      createdAt: "2024-01-15 09:15",
-      price: 3.0,
-      options: {
-        paperSize: "A4",
-        orientation: "landscape",
-        colorType: "color",
-        resolution: 300,
-        duplex: "long-edge",
-        staple: false,
-      },
-    },
-    {
-      id: "job_003",
-      fileName: "report.docx",
-      fileType: "DOCX",
-      fileSize: "1.8 MB",
-      pages: 8,
-      copies: 3,
-      status: "completed",
-      createdAt: "2024-01-14 16:45",
-      completedAt: "2024-01-14 17:02",
-      price: 4.2,
-      options: {
-        paperSize: "A4",
-        orientation: "portrait",
-        colorType: "grayscale",
-        resolution: 300,
-        duplex: "none",
-        staple: true,
-      },
-    },
-  ]);
+  const [page] = useState(1);
+  const [statusFilter] = useState<PRINT_STATUS | undefined>();
 
-  const getStatusColor = (status: PrintJob["status"]) => {
+  const {
+    data: printJobsData,
+    isLoading,
+    error
+  } = useGetUserPrintJobsQuery({
+    page,
+    limit: 10,
+    status: statusFilter
+  });
+
+  const [cancelPrintJob, { isLoading: isCancelling }] =
+    useCancelPrintJobMutation();
+  const [deletePrintJob, { isLoading: isDeleting }] =
+    useDeletePrintJobMutation();
+
+  const jobs = printJobsData?.data || [];
+
+  const getStatusColor = (status: PRINT_STATUS) => {
     switch (status) {
-      case "pending":
+      case PRINT_STATUS.PENDING:
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "processing":
+      case PRINT_STATUS.PROCESSING:
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case "ready":
+      case PRINT_STATUS.COMPLETED:
         return "bg-green-100 text-green-800 border-green-200";
-      case "completed":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "cancelled":
+      case PRINT_STATUS.FAILED:
         return "bg-red-100 text-red-800 border-red-200";
+      case PRINT_STATUS.CANCELLED:
+        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const getStatusIcon = (status: PrintJob["status"]) => {
+  const getStatusIcon = (status: PRINT_STATUS) => {
     switch (status) {
-      case "pending":
+      case PRINT_STATUS.PENDING:
         return <Clock className="h-4 w-4" />;
-      case "processing":
+      case PRINT_STATUS.PROCESSING:
         return <Clock className="h-4 w-4 animate-spin" />;
-      case "ready":
+      case PRINT_STATUS.COMPLETED:
         return <CheckCircle className="h-4 w-4" />;
-      case "completed":
-        return <CheckCircle className="h-4 w-4" />;
-      case "cancelled":
+      case PRINT_STATUS.FAILED:
+        return <AlertCircle className="h-4 w-4" />;
+      case PRINT_STATUS.CANCELLED:
         return <X className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
     }
   };
 
-  const handleCancelJob = (jobId: string) => {
-    // Handle job cancellation
-    console.log("Cancelling job:", jobId);
+  const handleCancelJob = async (jobId: string) => {
+    try {
+      await cancelPrintJob({
+        jobId,
+        data: { reason: "Cancelled by user" }
+      }).unwrap();
+      toast.success("Print job cancelled successfully");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to cancel print job");
+    }
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    try {
+      await deletePrintJob(jobId).unwrap();
+      toast.success("Print job deleted successfully");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to delete print job");
+    }
   };
 
   const handleDownloadJob = (jobId: string) => {
-    // Handle job download
     console.log("Downloading job:", jobId);
+    toast.info("Download feature coming soon");
   };
 
   const copyAuthCode = (code: string) => {
     navigator.clipboard.writeText(code);
+    toast.success("Code copied to clipboard!");
   };
 
   return (
@@ -158,7 +117,17 @@ const PrintJobsPage: React.FC = () => {
       </div>
 
       <div className="space-y-6">
-        {jobs.length === 0 ? (
+        {isLoading ? (
+          <ReusableCard title="Loading..." className="text-center py-12">
+            <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
+            <p className="text-gray-500">Loading print jobs...</p>
+          </ReusableCard>
+        ) : error ? (
+          <ReusableCard title="Error" className="text-center py-12">
+            <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+            <p className="text-red-500">Failed to load print jobs</p>
+          </ReusableCard>
+        ) : jobs.length === 0 ? (
           <ReusableCard title="No Print Jobs" className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500">
@@ -176,7 +145,9 @@ const PrintJobsPage: React.FC = () => {
                     <div>
                       <p className="font-medium">{job.fileName}</p>
                       <p className="text-sm text-gray-500">
-                        {job.fileType} • {job.fileSize} • {job.pages} pages
+                        {job.totalPages
+                          ? `${job.totalPages} pages`
+                          : "Processing..."}
                       </p>
                     </div>
                   </div>
@@ -196,22 +167,24 @@ const PrintJobsPage: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-gray-500">Paper Size</p>
-                    <p className="font-medium">{job.options.paperSize}</p>
+                    <p className="font-medium">{job.paperSize}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Color</p>
-                    <p className="font-medium">{job.options.colorType}</p>
+                    <p className="font-medium">{job.colorType}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Price</p>
                     <p className="font-medium">
-                      {handleFormatNaira(job.price)}
+                      {handleFormatNaira(
+                        job.estimatedCost || job.actualCost || 0
+                      )}
                     </p>
                   </div>
                 </div>
 
                 {/* Authentication Code */}
-                {job.authCode && job.status === "ready" && (
+                {job.code && job.status === PRINT_STATUS.COMPLETED && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -224,13 +197,13 @@ const PrintJobsPage: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-mono font-bold text-blue-600 mb-2">
-                          {job.authCode}
+                          {job.code}
                         </div>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => copyAuthCode(job.authCode!)}
+                            onClick={() => copyAuthCode(job.code!)}
                           >
                             <Copy className="h-3 w-3 mr-1" />
                             Copy
@@ -248,17 +221,15 @@ const PrintJobsPage: React.FC = () => {
                 {/* Job Actions */}
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div className="text-sm text-gray-500">
-                    <p>Created: {job.createdAt}</p>
-                    {job.completedAt && <p>Completed: {job.completedAt}</p>}
+                    <p>Created: {new Date(job.createdAt).toLocaleString()}</p>
+                    {job.completedAt && (
+                      <p>
+                        Completed: {new Date(job.completedAt).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2">
-                    {job.status === "ready" && (
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-3 w-3 mr-1" />
-                        View Details
-                      </Button>
-                    )}
-                    {job.status === "completed" && (
+                    {job.status === PRINT_STATUS.COMPLETED && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -268,16 +239,29 @@ const PrintJobsPage: React.FC = () => {
                         Download
                       </Button>
                     )}
-                    {(job.status === "pending" ||
-                      job.status === "processing") && (
+                    {(job.status === PRINT_STATUS.PENDING ||
+                      job.status === PRINT_STATUS.PROCESSING) && (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleCancelJob(job.id)}
+                        disabled={isCancelling}
                         className="text-red-600 hover:text-red-700"
                       >
                         <X className="h-3 w-3 mr-1" />
-                        Cancel
+                        {isCancelling ? "Cancelling..." : "Cancel"}
+                      </Button>
+                    )}
+                    {job.status === PRINT_STATUS.CANCELLED && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteJob(job.id)}
+                        disabled={isDeleting}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        {isDeleting ? "Deleting..." : "Delete"}
                       </Button>
                     )}
                   </div>

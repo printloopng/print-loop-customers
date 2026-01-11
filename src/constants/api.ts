@@ -14,10 +14,36 @@ export const API_ROUTES = {
     DETAIL: (id: string) => `notifications/${id}`,
     UPDATE: (id: string) => `notifications/${id}`,
     DELETE: (id: string) => `notifications/${id}`,
-    MARK_READ: "notifications/mark-read",
-    MARK_ALL_READ: "notifications/mark-all-read",
+    MARK_READ: (id: string) => `notifications/${id}/read`,
+    MARK_ALL_READ: "notifications/read-all",
     MARK_ARCHIVED: "notifications/mark-archived",
     STATS: "notifications/stats",
+  },
+
+  PRINT_JOBS: {
+    LIST: "print-jobs",
+    CREATE: "print-jobs",
+    DETAIL: (id: string) => `print-jobs/${id}`,
+    UPDATE: (id: string) => `print-jobs/${id}`,
+    DELETE: (id: string) => `print-jobs/${id}`,
+    CANCEL: (id: string) => `print-jobs/${id}/cancel`,
+    UPLOAD: "print-jobs/upload",
+    OPTIONS: "print-jobs/options",
+    STATS: "print-jobs/stats",
+  },
+
+  PAYMENTS: {
+    LIST: "payments",
+    CREATE: "payments",
+    DETAIL: (id: string) => `payments/${id}`,
+    VERIFY: (reference: string) => `payments/verify/${reference}`,
+  },
+
+  WALLET: {
+    FUND: "wallet/fund",
+    VERIFY: (reference: string) => `wallet/verify/${reference}`,
+    BALANCE: "wallet/balance",
+    TRANSACTIONS: "wallet/transactions",
   },
 };
 

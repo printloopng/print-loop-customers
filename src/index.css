@@ -117,3 +117,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media (max-width: 1280px) {
+  .container {
+    max-width: 100% !important;
+    padding: 0 20px;
+  }
+}
+
+/* Large screens (1024px and up) */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 60rem;
+  }
+}
+
+/* Extra large screens (1280px and up) */
+@media (min-width: 1280px) {
+  .container {
+    max-width: 75rem;
+  }
+}
+
+/* 2XL screens (1536px and up) */
+@media (min-width: 1536px) {
+  .container {
+    max-width: 80rem;
+  }
+}
