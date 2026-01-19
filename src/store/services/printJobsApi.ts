@@ -1,20 +1,13 @@
 import { API_ROUTES, RTK_TAGS } from "@/constants";
 import {
-  PrintJob,
-  CreatePrintJobRequest,
-  UploadFileResponse,
-  PrintOptions,
-  PrintJobStats,
-  CancelPrintJobRequest,
-  PrintJobQueryParams
-} from "@/types/printJob";
-import { PaginatedResponse, ServiceResponse } from "@/types/statics";
+  PaginatedResponse
+} from "@/types/statics";
 import { apiSlice } from "./apiSlice";
 
 export const printJobsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     uploadPrintFile: builder.mutation<
-      UploadFileResponse,
+      any,
       { fileBase64: string; fileName: string; fileType: string }
     >({
       query: ({ fileBase64, fileName, fileType }) => ({
@@ -27,7 +20,7 @@ export const printJobsApi = apiSlice.injectEndpoints({
       }
     }),
 
-    getPrintOptions: builder.query<PrintOptions, void>({
+    getPrintOptions: builder.query<any, void>({
       query: () => ({
         url: API_ROUTES.PRINT_JOBS.OPTIONS,
         method: "GET"
@@ -37,8 +30,32 @@ export const printJobsApi = apiSlice.injectEndpoints({
       }
     }),
 
+    calculatePrice: builder.mutation<
+      { price: number },
+      {
+        pageCount: number;
+        paperSize: string;
+        orientation: string;
+        copies: number;
+        pageRange?: string;
+        staple?: boolean;
+        colorType: string;
+        resolution?: number;
+        duplex: string;
+      }
+    >({
+      query: (body) => ({
+        url: API_ROUTES.PRINT_JOBS.CALCULATE_PRICE,
+        method: "POST",
+        body
+      }),
+      transformResponse: (response: any) => {
+        return response?.data || response?.response || response;
+      }
+    }),
+
     getPrintJobStats: builder.query<
-      PrintJobStats,
+      any,
       { startDate?: string; endDate?: string }
     >({
       query: (params) => ({
@@ -46,20 +63,20 @@ export const printJobsApi = apiSlice.injectEndpoints({
         method: "GET",
         params
       }),
-      transformResponse: (response: ServiceResponse<PrintJobStats>) => {
+      transformResponse: (response: any) => {
         return response?.response || response;
       },
       providesTags: [{ type: RTK_TAGS.PRINT_JOBS, id: "STATS" }]
     }),
 
-    createPrintJob: builder.mutation<PrintJob, CreatePrintJobRequest>({
+    createPrintJob: builder.mutation<any, any>({
       query: (printJobData) => ({
         url: API_ROUTES.PRINT_JOBS.CREATE,
         method: "POST",
         body: printJobData
       }),
       transformResponse: (response: any) => {
-        return response?.data || response?.response || response;
+        return response?.response;
       },
       invalidatesTags: [
         { type: RTK_TAGS.PRINT_JOBS, id: "LIST" },
@@ -68,44 +85,26 @@ export const printJobsApi = apiSlice.injectEndpoints({
     }),
 
     getUserPrintJobs: builder.query<
-      PaginatedResponse<PrintJob>,
-      PrintJobQueryParams
+      PaginatedResponse<any>,
+      any
     >({
       query: (params) => ({
         url: API_ROUTES.PRINT_JOBS.LIST,
         method: "GET",
         params
       }),
-      transformResponse: (response: any) => {
-        // Handle response structure: { success, message, data, meta }
-        if (response?.data && response?.meta) {
-          return {
-            data: response.data,
-            meta: {
-              total: response.meta.total || 0,
-              page: typeof response.meta.page === 'string'
-                ? parseInt(response.meta.page, 10)
-                : response.meta.page || 1,
-              limit: typeof response.meta.limit === 'string'
-                ? parseInt(response.meta.limit, 10)
-                : response.meta.limit || 10,
-              totalPages: response.meta.totalPages || 1
-            }
-          };
-        }
-        // Fallback to old structure
-        return response?.response || response;
-      },
+      transformResponse: (response: any) =>
+        response?.response,
       providesTags: () => [{ type: RTK_TAGS.PRINT_JOBS, id: "LIST" }]
     }),
 
-    getPrintJobById: builder.query<PrintJob, string>({
+    getPrintJobById: builder.query<any, string>({
       query: (jobId) => ({
         url: API_ROUTES.PRINT_JOBS.DETAIL(jobId),
         method: "GET"
       }),
       transformResponse: (response: any) => {
-        return response?.data || response?.response || response;
+        return response?.response || response;
       },
       providesTags: (_result, _error, jobId) => [
         { type: RTK_TAGS.PRINT_JOBS, id: jobId }
@@ -113,8 +112,8 @@ export const printJobsApi = apiSlice.injectEndpoints({
     }),
 
     cancelPrintJob: builder.mutation<
-      PrintJob,
-      { jobId: string; data: CancelPrintJobRequest }
+      any,
+      { jobId: string; data: any }
     >({
       query: ({ jobId, data }) => ({
         url: API_ROUTES.PRINT_JOBS.CANCEL(jobId),
@@ -131,7 +130,7 @@ export const printJobsApi = apiSlice.injectEndpoints({
       ]
     }),
 
-    deletePrintJob: builder.mutation<void, string>({
+    deletePrintJob: builder.mutation<any, string>({
       query: (jobId) => ({
         url: API_ROUTES.PRINT_JOBS.DELETE(jobId),
         method: "DELETE"
@@ -141,6 +140,31 @@ export const printJobsApi = apiSlice.injectEndpoints({
         { type: RTK_TAGS.PRINT_JOBS, id: "LIST" },
         { type: RTK_TAGS.PRINT_JOBS, id: "STATS" }
       ]
+    }),
+
+    getPresignedUrl: builder.mutation<
+      {
+        url: string;
+        params: {
+          api_key: string;
+          timestamp: number;
+          signature: string;
+          folder?: string;
+          allowed_formats?: string;
+          public_id?: string;
+          tags?: string;
+        }
+      },
+      { fileName: string; fileType: string }
+    >({
+      query: (body) => ({
+        url: API_ROUTES.UPLOAD.PRESIGNED_URL,
+        method: "POST",
+        body
+      }),
+      transformResponse: (response: any) => {
+        return response?.data || response?.response || response;
+      }
     })
   })
 });
@@ -153,5 +177,7 @@ export const {
   useGetUserPrintJobsQuery,
   useGetPrintJobByIdQuery,
   useCancelPrintJobMutation,
-  useDeletePrintJobMutation
+  useDeletePrintJobMutation,
+  useGetPresignedUrlMutation,
+  useCalculatePriceMutation
 } = printJobsApi;

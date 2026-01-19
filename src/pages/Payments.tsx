@@ -64,7 +64,7 @@ const PaymentsPage: React.FC = () => {
     switch (method) {
       case PAYMENT_METHOD.WALLET:
         return <Wallet className="h-4 w-4" />;
-      case PAYMENT_METHOD.CARD:
+      case PAYMENT_METHOD.PAYSTACK:
         return <CreditCard className="h-4 w-4" />;
       default:
         return <CreditCard className="h-4 w-4" />;

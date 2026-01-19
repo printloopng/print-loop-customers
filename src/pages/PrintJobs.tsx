@@ -10,7 +10,6 @@ import {
   X,
   Download,
   Copy,
-  QrCode,
   AlertCircle
 } from "lucide-react";
 import { handleFormatNaira } from "@/utils/helperFunction";
@@ -136,7 +135,7 @@ const PrintJobs: React.FC = () => {
           </ReusableCard>
         ) : (
           jobs.map((job) => (
-            <ReusableCard key={job.id} title={`Job #${job.jobNumber}`}>
+            <ReusableCard key={job.id} title={`Job #${job.jobNumber || job.id.slice(0, 8)}`}>
               <div className="space-y-4">
                 {/* Job Header */}
                 <div className="flex items-center justify-between">
@@ -161,22 +160,34 @@ const PrintJobs: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">Copies</p>
-                    <p className="font-medium">{job.copies}</p>
+                    <p className="font-medium capitalize">
+                      {job.printConfig?.copies || 1}
+                    </p>
                   </div>
                   <div>
+                    <p className="text-gray-500">Payment Status</p>
+                    <p className="font-medium capitalize">
+                      {job.paymentStatus || "N/A"}
+                    </p>
+                  </div>
+
+                  <div>
                     <p className="text-gray-500">Paper Size</p>
-                    <p className="font-medium">{job.paperSize}</p>
+                    <p className="font-medium capitalize">
+                      {job.printConfig?.paperSize || "N/A"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Color</p>
-                    <p className="font-medium">{job.colorType}</p>
+                    <p className="font-medium capitalize">
+                      {job.printConfig?.colorType || "N/A"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Price</p>
                     <p className="font-medium">
                       {handleFormatNaira(
-                        parseFloat(job.estimatedCost?.toString() || "0") ||
-                        parseFloat(job.actualCost?.toString() || "0") ||
+                        parseFloat(job.cost?.toString() || "0") ||
                         0
                       )}
                     </p>
@@ -208,10 +219,7 @@ const PrintJobs: React.FC = () => {
                             <Copy className="h-3 w-3 mr-1" />
                             Copy
                           </Button>
-                          <Button size="sm" variant="outline">
-                            <QrCode className="h-3 w-3 mr-1" />
-                            QR
-                          </Button>
+
                         </div>
                       </div>
                     </div>

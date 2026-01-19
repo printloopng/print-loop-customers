@@ -1,25 +1,15 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import ReusableCard from "@/components/ui/cards";
-import { PAPER_SIZE, ORIENTATION, COLOR_TYPE, DUPLEX } from "@/types/printJob";
-
-interface PrintOptions {
-  paperSize: PAPER_SIZE;
-  orientation: ORIENTATION;
-  copies: number;
-  colorType: COLOR_TYPE;
-  resolution: number;
-  duplex: DUPLEX;
-  staple: boolean;
-}
+import { PrintConfig, DUPLEX } from "@/types/printJob";
 
 interface OrderSummaryProps {
-  options: PrintOptions;
+  printConfig: PrintConfig;
   totalPrice: number;
 }
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({
-  options,
+  printConfig,
   totalPrice,
 }) => {
   return (
@@ -27,35 +17,41 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="space-y-4">
         <div className="flex justify-between">
           <span>Paper Size:</span>
-          <Badge variant="outline">{options.paperSize}</Badge>
+          <Badge variant="outline">{printConfig.paperSize}</Badge>
         </div>
         <div className="flex justify-between">
           <span>Orientation:</span>
-          <Badge variant="outline">{options.orientation}</Badge>
+          <Badge variant="outline">{printConfig.orientation}</Badge>
         </div>
         <div className="flex justify-between">
           <span>Copies:</span>
-          <span>{options.copies}</span>
+          <span>{printConfig.copies}</span>
         </div>
         <div className="flex justify-between">
           <span>Color:</span>
-          <Badge variant="outline">{options.colorType}</Badge>
+          <Badge variant="outline">{printConfig.colorType}</Badge>
         </div>
         <div className="flex justify-between">
           <span>Resolution:</span>
-          <span>{options.resolution} DPI</span>
+          <span>{printConfig.resolution} DPI</span>
         </div>
-        {(options.duplex === DUPLEX.DOUBLE_SIDED_LONG_EDGE ||
-          options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE) && (
-          <div className="flex justify-between">
-            <span>Duplex:</span>
-            <Badge variant="outline">{options.duplex}</Badge>
-          </div>
-        )}
-        {options.staple && (
+        {(printConfig.duplex === DUPLEX.DOUBLE_SIDED_LONG_EDGE ||
+          printConfig.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE) && (
+            <div className="flex justify-between">
+              <span>Duplex:</span>
+              <Badge variant="outline">{printConfig.duplex}</Badge>
+            </div>
+          )}
+        {printConfig.staple && (
           <div className="flex justify-between">
             <span>Staple:</span>
             <Badge variant="outline">Yes</Badge>
+          </div>
+        )}
+        {printConfig.pageRange && (
+          <div className="flex justify-between">
+            <span>Page Range:</span>
+            <Badge variant="outline">{printConfig.pageRange}</Badge>
           </div>
         )}
         <hr />

@@ -17,7 +17,7 @@ interface PrintOptions {
 interface PrintSummaryProps {
   fileName: string;
   fileSize: string;
-  totalPages: number;
+  pageCount: number;
   options: PrintOptions;
   totalPrice: number;
 }
@@ -25,7 +25,7 @@ interface PrintSummaryProps {
 export const PrintSummary: React.FC<PrintSummaryProps> = ({
   fileName,
   fileSize,
-  totalPages,
+  pageCount,
   options,
   totalPrice,
 }) => {
@@ -43,7 +43,7 @@ export const PrintSummary: React.FC<PrintSummaryProps> = ({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span>Pages:</span>
-            <span>{totalPages}</span>
+            <span>{pageCount}</span>
           </div>
           <div className="flex justify-between">
             <span>Copies:</span>
@@ -67,11 +67,11 @@ export const PrintSummary: React.FC<PrintSummaryProps> = ({
           </div>
           {(options.duplex === DUPLEX.DOUBLE_SIDED_LONG_EDGE ||
             options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE) && (
-            <div className="flex justify-between">
-              <span>Duplex:</span>
-              <Badge variant="outline">{options.duplex}</Badge>
-            </div>
-          )}
+              <div className="flex justify-between">
+                <span>Duplex:</span>
+                <Badge variant="outline">{options.duplex}</Badge>
+              </div>
+            )}
           {options.staple && (
             <div className="flex justify-between">
               <span>Staple:</span>

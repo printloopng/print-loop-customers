@@ -32,7 +32,7 @@ const Payment: React.FC = () => {
   const { paymentId } = useParams<{ paymentId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMethod, setSelectedMethod] = useState<PAYMENT_METHOD>(
-    PAYMENT_METHOD.PAYSTACK
+    PAYMENT_METHOD.WALLET
   );
   const [isProcessing, setIsProcessing] = useState(false);
   const [showAuthCode, setShowAuthCode] = useState(false);
@@ -54,10 +54,9 @@ const Payment: React.FC = () => {
   const [verifyPayment] = useLazyVerifyPaymentQuery();
 
   const walletBalance = wallet?.balance || 0;
-  const totalAmount = payment?.amount || printJob?.estimatedCost || printJob?.actualCost || 0;
+  const totalAmount = payment?.amount || printJob?.cost || 0;
   const authCode = printJob?.code || "";
 
-  // Handle Paystack callback
   useEffect(() => {
     const reference = searchParams.get("reference") || searchParams.get("trxref");
 
@@ -145,10 +144,6 @@ const Payment: React.FC = () => {
           toast.error("Payment URL not available");
         }
       }
-    } catch (error: any) {
-      toast.error(
-        error?.data?.message || error?.message || "Failed to process payment"
-      );
     } finally {
       setIsProcessing(false);
     }
@@ -258,10 +253,7 @@ const Payment: React.FC = () => {
                       <Copy className="h-4 w-4 mr-2" />
                       Copy Code
                     </Button>
-                    <Button variant="outline" className="flex-1">
-                      <QrCode className="h-4 w-4 mr-2" />
-                      Show QR Code
-                    </Button>
+
                   </div>
                 </div>
               </ReusableCard>
@@ -399,21 +391,31 @@ const Payment: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>Pages:</span>
-                  <span>{printJob.totalPages || "N/A"} pages</span>
+                  <span>{printJob.pageCount || "N/A"} pages</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Copies:</span>
-                  <span>{printJob.copies} {printJob.copies === 1 ? "copy" : "copies"}</span>
+                  <span>
+                    {printJob.printConfig?.copies || printJob.copies || 1}{" "}
+                    {(printJob.printConfig?.copies || printJob.copies || 1) === 1
+                      ? "copy"
+                      : "copies"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Color:</span>
                   <Badge variant="outline">
-                    {printJob.colorType === COLOR_TYPE.COLOR ? "Color" : "Black & White"}
+                    {(printJob.printConfig?.colorType || printJob.colorType) ===
+                      COLOR_TYPE.COLOR
+                      ? "Color"
+                      : "Black & White"}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span>Paper Size:</span>
-                  <span className="text-sm">{printJob.paperSize}</span>
+                  <span className="text-sm">
+                    {printJob.printConfig?.paperSize || printJob.paperSize || "N/A"}
+                  </span>
                 </div>
                 <hr />
                 <div className="flex justify-between text-lg font-semibold">

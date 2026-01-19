@@ -30,21 +30,25 @@ export enum DUPLEX {
   DOUBLE_SIDED_SHORT_EDGE = "double_sided_short_edge",
 }
 
+export interface PrintConfig {
+  paperSize: PAPER_SIZE;
+  orientation: ORIENTATION;
+  colorType: COLOR_TYPE;
+  duplex: DUPLEX;
+  copies: number;
+  staple: boolean;
+  resolution: number;
+  pageRange?: string;
+}
+
 export interface PrintJob {
   id: string;
   jobNumber: string;
+  paymentStatus?: string;
   status: PRINT_STATUS;
-  paperSize: PAPER_SIZE;
-  orientation: ORIENTATION;
-  copies: number;
-  pageRange?: string;
-  staple: boolean;
-  colorType: COLOR_TYPE;
-  resolution: number;
-  duplex: DUPLEX;
+  printConfig?: PrintConfig;
   totalPages?: number;
-  estimatedCost?: number | string;
-  actualCost?: number | string;
+  cost?: number | string;
   completedAt?: string;
   failureReason?: string;
   code?: string;
@@ -56,10 +60,19 @@ export interface PrintJob {
   paymentId?: string;
   createdAt: string;
   updatedAt: string;
+  // Legacy fields for backward compatibility (deprecated, use printConfig)
+  paperSize?: PAPER_SIZE;
+  orientation?: ORIENTATION;
+  copies?: number;
+  pageRange?: string;
+  staple?: boolean;
+  colorType?: COLOR_TYPE;
+  resolution?: number;
+  duplex?: DUPLEX;
 }
 
 export interface CreatePrintJobRequest {
-  fileBase64: string;
+  fileKey: string;
   paperSize: PAPER_SIZE;
   orientation: ORIENTATION;
   copies: number;
@@ -68,6 +81,7 @@ export interface CreatePrintJobRequest {
   colorType: COLOR_TYPE;
   resolution?: number;
   duplex: DUPLEX;
+  pageCount?: number;
 }
 
 export interface UploadFileResponse {

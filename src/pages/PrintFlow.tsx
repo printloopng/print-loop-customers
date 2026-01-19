@@ -7,7 +7,9 @@ import { LogIn } from "lucide-react";
 import { useAppSelector } from "@/hooks/redux";
 import {
   useGetPrintOptionsQuery,
-  useCreatePrintJobMutation
+  useCreatePrintJobMutation,
+  useGetPresignedUrlMutation,
+  useCalculatePriceMutation
 } from "@/store/services/printJobsApi";
 import { PAPER_SIZE, ORIENTATION, COLOR_TYPE, DUPLEX } from "@/types/printJob";
 import {
@@ -47,7 +49,7 @@ const PrintFlow: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileBase64, setFileBase64] = useState<string>("");
+  const [fileKey, setFileKey] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
 
   const [options, setOptions] = useState<PrintOptions>({
@@ -61,12 +63,14 @@ const PrintFlow: React.FC = () => {
     duplex: DUPLEX.SINGLE_SIDED
   });
   const [customPageRange, setCustomPageRange] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [zoom, setZoom] = useState(100);
+  const [pageCount, setPageCount] = useState<number | null>(null);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
 
   const { data: printOptions, error: optionsError } = useGetPrintOptionsQuery();
   const [createPrintJob, { isLoading: isCreatingJob }] =
     useCreatePrintJobMutation();
+  const [getPresignedUrl] = useGetPresignedUrlMutation();
+  const [calculatePriceMutation] = useCalculatePriceMutation();
 
   React.useEffect(() => {
     if (printOptions) {
@@ -108,28 +112,14 @@ const PrintFlow: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        resolve(base64String); // Return full data URL format
-      };
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setUploadedFiles([]);
     setSelectedFile(null);
-    setFileBase64("");
+    setFileKey("");
+    setPageCount(null);
 
     const file = acceptedFiles[0];
     if (!file) return;
-
-    // Convert file to base64 for preview
-    const base64 = await fileToBase64(file);
 
     const fileId = Math.random().toString(36).substr(2, 9);
     const newFile: UploadedFile = {
@@ -138,87 +128,123 @@ const PrintFlow: React.FC = () => {
       preview: URL.createObjectURL(file),
       size: file.size,
       type: file.type,
-      status: "completed",
-      progress: 100
+      status: "uploading",
+      progress: 0
     };
 
     setUploadedFiles([newFile]);
     setSelectedFile(file);
-    setFileBase64(base64);
-    toast.success("File selected successfully!");
-  }, []);
+    setIsUploading(true);
+
+    try {
+      const presignedData = await getPresignedUrl({
+        fileName: file.name,
+        fileType: file.type
+      }).unwrap();
+
+      const { url, params } = presignedData;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      formData.append('api_key', params.api_key);
+      formData.append('timestamp', String(params.timestamp));
+      formData.append('signature', params.signature);
+
+      if (params.folder) formData.append('folder', params.folder);
+      if (params.allowed_formats) formData.append('allowed_formats', params.allowed_formats);
+      if (params.public_id) formData.append('public_id', params.public_id);
+      if (params.tags) formData.append('tags', params.tags);
+
+      const uploadResponse = await fetch(url, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload file");
+      }
+
+      const uploadResult = await uploadResponse.json();
+      const fileKey = uploadResult.public_id || params.public_id;
+      const pagesCount = uploadResult.pages || 1;
+
+      setFileKey(fileKey);
+      setPageCount(pagesCount);
+
+      setUploadedFiles([{ ...newFile, status: "completed", progress: 100 }]);
+      toast.success(`File uploaded: ${pagesCount} page${pagesCount !== 1 ? 's' : ''} detected`);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      setUploadedFiles([{ ...newFile, status: "error", progress: 0 }]);
+      toast.error("Failed to upload file. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  }, [getPresignedUrl]);
 
   const removeFile = (fileId: string) => {
     setUploadedFiles((prev) =>
       prev.filter((uploadedFile) => uploadedFile.id !== fileId)
     );
     setSelectedFile(null);
-    setFileBase64("");
+    setFileKey("");
+    setPageCount(null);
   };
 
-  const calculatePrice = () => {
-    const defaultPricing = {
-      colorPricePerPage: 25,
-      blackWhitePricePerPage: 10,
-      staplePrice: 0.05
+
+  // Recalculate price when options or pageCount change
+  React.useEffect(() => {
+    const fetchPrice = async () => {
+      if (pageCount && pageCount > 0) {
+        try {
+          const pageRangeValue = options.pageRange === "custom"
+            ? customPageRange
+            : options.pageRange !== "all"
+              ? options.pageRange
+              : undefined;
+
+          const result = await calculatePriceMutation({
+            pageCount,
+            paperSize: options.paperSize,
+            orientation: options.orientation,
+            copies: options.copies,
+            pageRange: pageRangeValue,
+            staple: options.staple,
+            colorType: options.colorType === COLOR_TYPE.COLOR ? "color" : "black_white",
+            resolution: options.resolution,
+            duplex: options.duplex === DUPLEX.SINGLE_SIDED
+              ? "single_sided"
+              : options.duplex === DUPLEX.DOUBLE_SIDED_LONG_EDGE
+                ? "double_sided_long_edge"
+                : options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE
+                  ? "double_sided_short_edge"
+                  : "single_sided"
+          }).unwrap();
+
+          setCalculatedPrice(result.price);
+        } catch (error) {
+          console.error("Failed to calculate price:", error);
+          setCalculatedPrice(null);
+        }
+      } else {
+        setCalculatedPrice(null);
+      }
     };
-
-    if (!printOptions) {
-      return defaultPricing.blackWhitePricePerPage;
-    }
-
-    const colorTypeOption = printOptions.colorTypes?.find(
-      (ct) =>
-        ct.value ===
-        (options.colorType === COLOR_TYPE.COLOR ? "color" : "black_white")
-    );
-
-    const duplexOption = printOptions.duplexOptions?.find(
-      (d) =>
-        d.value ===
-        (options.duplex === DUPLEX.SINGLE_SIDED
-          ? "single_sided"
-          : options.duplex === DUPLEX.DOUBLE_SIDED_LONG_EDGE
-            ? "double_sided_long_edge"
-            : options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE
-              ? "double_sided_short_edge"
-              : "single_sided")
-    );
-
-    const staplingService = printOptions.additionalServices?.find(
-      (s) => s.name.toLowerCase() === "stapling"
-    );
-
-    const paperSizeOption = printOptions.paperSizes?.find(
-      (ps) => ps.value === options.paperSize
-    );
-
-    let pricePerPage =
-      colorTypeOption?.costPerPage ||
-      (options.colorType === COLOR_TYPE.COLOR
-        ? defaultPricing.colorPricePerPage
-        : defaultPricing.blackWhitePricePerPage);
-
-    const sizeMultiplier = paperSizeOption?.costMultiplier || 1.0;
-    pricePerPage *= sizeMultiplier;
-
-    const duplexMultiplier = duplexOption?.costMultiplier || 1.0;
-    pricePerPage *= duplexMultiplier;
-
-    let totalPages = 1;
-
-    if (options.duplex !== DUPLEX.SINGLE_SIDED) {
-      totalPages = Math.ceil(totalPages / 2);
-    }
-
-    const stapleFee = options.staple
-      ? staplingService?.cost || defaultPricing.staplePrice
-      : 0;
-
-    const totalPrice = pricePerPage * totalPages * options.copies + stapleFee;
-
-    return Math.round(totalPrice * 100) / 100;
-  };
+    fetchPrice();
+  }, [
+    pageCount,
+    options.paperSize,
+    options.orientation,
+    options.copies,
+    options.pageRange,
+    customPageRange,
+    options.staple,
+    options.colorType,
+    options.resolution,
+    options.duplex,
+    calculatePriceMutation
+  ]);
 
   const handleNext = () => {
     if (currentStep < steps.length) {
@@ -243,34 +269,34 @@ const PrintFlow: React.FC = () => {
       return;
     }
 
-    if (!fileBase64) {
-      toast.error("File data not available. Please re-select your file.");
+    if (!fileKey) {
+      toast.error("File not uploaded. Please re-select your file.");
       return;
     }
 
     setIsUploading(true);
 
     try {
-      const printJob = await createPrintJob({
-        fileBase64,
+      const validPageCount = pageCount && pageCount > 0 ? Math.floor(pageCount) : undefined;
+
+      const result = await createPrintJob({
+        fileKey,
         paperSize: options.paperSize,
         orientation: options.orientation,
         copies: options.copies,
-        pageRange: options.pageRange === "custom" ? customPageRange : undefined,
+        pageRange: options.pageRange === "custom" ? customPageRange : options.pageRange !== "all" ? options.pageRange : undefined,
         staple: options.staple,
         colorType: options.colorType,
         resolution: options.resolution,
-        duplex: options.duplex
+        duplex: options.duplex,
+        pageCount: validPageCount
       }).unwrap();
 
       toast.success("Print job created successfully!");
 
-      // Navigate to payment detail page using paymentId from print job response
-      if (printJob.paymentId) {
-        navigate(ROUTES.APP.PAYMENT(printJob.paymentId));
+      if (result.payment?.paymentId) {
+        navigate(ROUTES.APP.PAYMENT(result.payment?.paymentId));
       } else {
-        // Fallback: navigate to payments list if paymentId is not available
-        toast.error("Payment ID not found in print job response");
         navigate(ROUTES.APP.PAYMENTS);
       }
     } catch (error: any) {
@@ -284,7 +310,7 @@ const PrintFlow: React.FC = () => {
     setOptions((prev) => ({ ...prev, ...newOptions }));
   };
 
-  const completedFiles = uploadedFiles.filter((f) => f.status === "completed");
+  const completedFiles = uploadedFiles.filter((f: any) => f.status === "completed");
 
   const canProceedToNext = () => {
     switch (currentStep) {
@@ -324,7 +350,19 @@ const PrintFlow: React.FC = () => {
               />
             </div>
             <div className="space-y-6">
-              <OrderSummary options={options} totalPrice={calculatePrice()} />
+              <OrderSummary
+                printConfig={{
+                  paperSize: options.paperSize,
+                  orientation: options.orientation,
+                  copies: options.copies,
+                  colorType: options.colorType,
+                  resolution: options.resolution,
+                  duplex: options.duplex,
+                  staple: options.staple,
+                  pageRange: options.pageRange === "custom" ? customPageRange : options.pageRange !== "all" ? options.pageRange : undefined
+                }}
+                totalPrice={calculatedPrice || 0}
+              />
             </div>
           </div>
         );
@@ -334,31 +372,27 @@ const PrintFlow: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-3">
               <PreviewStep
-                fileName={completedFiles[0]?.file.name || "document.pdf"}
-                fileBase64={fileBase64}
+                fileName={completedFiles[0]?.file?.name || "document.pdf"}
+                fileBase64=""
                 fileType={completedFiles[0]?.type || ""}
-                currentPage={currentPage}
-                totalPages={5}
-                zoom={zoom}
+                currentPage={1}
+                pageCount={pageCount || 1}
+                zoom={100}
                 paperSize={options.paperSize}
                 orientation={options.orientation}
-                onZoomIn={() => setZoom((prev) => Math.min(prev + 25, 200))}
-                onZoomOut={() => setZoom((prev) => Math.max(prev - 25, 50))}
-                onPreviousPage={() =>
-                  setCurrentPage((prev) => Math.max(prev - 1, 1))
-                }
-                onNextPage={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, 5))
-                }
+                onZoomIn={() => { }}
+                onZoomOut={() => { }}
+                onPreviousPage={() => { }}
+                onNextPage={() => { }}
               />
             </div>
             <div className="space-y-6">
               <PrintSummary
-                fileName={completedFiles[0]?.file.name || "document.pdf"}
-                fileSize={formatFileSize(completedFiles[0]?.size || 2400000)}
-                totalPages={5}
+                fileName={completedFiles[0]?.file?.name || "document.pdf"}
+                fileSize={formatFileSize(completedFiles[0]?.size || 0)}
+                pageCount={pageCount || 1}
                 options={options}
-                totalPrice={calculatePrice()}
+                totalPrice={calculatedPrice || 0}
               />
             </div>
           </div>

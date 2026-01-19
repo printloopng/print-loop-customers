@@ -32,9 +32,9 @@ export function providesTagList<
 >(resultsWithIds: R | undefined, tagType: T) {
   return resultsWithIds
     ? [
-        { type: tagType, id: "LIST" },
-        ...resultsWithIds.map(({ id }) => ({ type: tagType, id })),
-      ]
+      { type: tagType, id: "LIST" },
+      ...resultsWithIds.map(({ id }) => ({ type: tagType, id })),
+    ]
     : [{ type: tagType, id: "LIST" }];
 }
 
@@ -114,8 +114,13 @@ export function handleFormatDate(date: any) {
 }
 
 export function handleFormatNaira(amount: number) {
-  return `₦${amount.toFixed(2)}`;
+  const formattedAmount = Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+  }).format(amount || 0);
+  return formattedAmount;
 }
+
 export function convert2base64(file: any) {
   return new Promise((resolve, reject) => {
     const fileReader = new FileReader();
