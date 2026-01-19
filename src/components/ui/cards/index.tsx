@@ -39,8 +39,15 @@ const ReusableCard: React.FC<ReusableCardProps> = ({
     "2xl": "max-w-2xl",
   };
 
+  const rounded = {
+    default: "rounded",
+    sm: "rounded-lg",
+    lg: "rounded-xl",
+    xl: "rounded-2xl",
+    "2xl": "rounded-3xl",
+  };
   return (
-    <Card className={cn(variants[variant], sizes[size], className)}>
+    <Card className={cn(variants[variant], sizes[size], rounded[size], className)}>
       {(title || description) && (
         <CardHeader>
           {title && (

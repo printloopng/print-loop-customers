@@ -108,14 +108,14 @@ const PrintJobs: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold text-gray-900">Print Jobs</h1>
         <p className="text-gray-600 mt-2">
           Manage your print jobs and track their status
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-4">
         {isLoading ? (
           <ReusableCard title="Loading..." className="text-center py-12">
             <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
@@ -157,7 +157,7 @@ const PrintJobs: React.FC = () => {
                 </div>
 
                 {/* Job Details */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">Copies</p>
                     <p className="font-medium capitalize">

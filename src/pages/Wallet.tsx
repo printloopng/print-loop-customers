@@ -125,15 +125,15 @@ const Wallet: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="mb-8">
+    <div className="flex flex-col gap-4">
+      <div className="">
         <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
         <p className="text-gray-600 mt-2">
           Manage your account balance and transaction history
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ReusableCard title="Account Balance" className="lg:col-span-1">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
@@ -159,7 +159,7 @@ const Wallet: React.FC = () => {
         </ReusableCard>
 
         <ReusableCard title="Add Funds" className="lg:col-span-2">
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Amount to add</Label>
               <div className="flex gap-2">
@@ -204,8 +204,8 @@ const Wallet: React.FC = () => {
         </ReusableCard>
       </div>
 
-      <ReusableCard title="Transaction History" className="mt-8">
-        <div className="space-y-4">
+      <ReusableCard title="Transaction History">
+        <div className="flex flex-col gap-4">
           {isLoadingTransactions ? (
             <div className="text-center py-8 text-gray-500">
               <Clock className="h-12 w-12 mx-auto mb-2 text-gray-300 animate-spin" />
@@ -261,7 +261,7 @@ const Wallet: React.FC = () => {
         </div>
       </ReusableCard>
 
-      <ReusableCard title="Wallet Benefits" className="mt-8">
+      <ReusableCard title="Wallet Benefits">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">

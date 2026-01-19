@@ -41,7 +41,7 @@ const LoginPrompt: React.FC<LoginPromptProps> = ({
                 className="w-full"
                 size="lg"
               >
-                <User className="h-4 w-4 mr-2" />
+                <User className="h-4 " />
                 Sign In
               </Button>
 
@@ -51,7 +51,7 @@ const LoginPrompt: React.FC<LoginPromptProps> = ({
                   onClick={() => navigate(ROUTES.AUTH.REGISTER)}
                   className="w-full"
                 >
-                  <Lock className="h-4 w-4 mr-2" />
+                  <Lock className="h-4 " />
                   Create Account
                 </Button>
               )}

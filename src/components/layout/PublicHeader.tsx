@@ -27,7 +27,7 @@ const Header: React.FC = () => {
             <Button
               variant="ghost"
               onClick={() => navigate("/")}
-              className="text-xl font-bold text-gray-900 hover:text-black"
+              className="text-xl px-0 font-bold text-gray-900 hover:text-black"
             >
               PrintLoop
             </Button>
@@ -40,7 +40,7 @@ const Header: React.FC = () => {
               onClick={() => navigate("/")}
               className="text-gray-600 hover:text-gray-900"
             >
-              <Home className="h-4 w-4 mr-2" />
+              <Home className="h-4 " />
               Print Station
             </Button>
             {accessToken && (
@@ -57,7 +57,7 @@ const Header: React.FC = () => {
                   onClick={() => navigate(ROUTES.APP.WALLET)}
                   className="text-gray-600 hover:text-gray-900"
                 >
-                  <Wallet className="h-4 w-4 mr-2" />
+                  <Wallet className="h-4 " />
                   Wallet
                 </Button>
               </>
@@ -72,11 +72,11 @@ const Header: React.FC = () => {
                   variant="outline"
                   onClick={() => navigate(ROUTES.APP.DASHBOARD)}
                 >
-                  <User className="h-4 w-4 mr-2" />
+                  <User className="h-4 " />
                   Dashboard
                 </Button>
                 <Button onClick={handleLogout} variant="outline" size="sm">
-                  <LogOut className="h-4 w-4 mr-2" />
+                  <LogOut className="h-4 " />
                   Logout
                 </Button>
               </div>
@@ -86,7 +86,7 @@ const Header: React.FC = () => {
                   variant="ghost"
                   onClick={() => navigate(ROUTES.AUTH.LOGIN)}
                 >
-                  <LogIn className="h-4 w-4 mr-2" />
+                  <LogIn className="h-4 " />
                   Sign In
                 </Button>
                 <Button onClick={() => navigate(ROUTES.AUTH.REGISTER)}>

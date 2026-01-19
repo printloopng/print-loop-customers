@@ -444,7 +444,7 @@ const PrintFlow: React.FC = () => {
                   "Proceed to Payment"
                 ) : (
                   <>
-                    <LogIn className="h-4 w-4 mr-2" />
+                    <LogIn className="h-4 " />
                     Login to Pay
                   </>
                 )}

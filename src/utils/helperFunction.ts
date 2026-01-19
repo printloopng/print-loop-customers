@@ -115,10 +115,10 @@ export function handleFormatDate(date: any) {
 
 export function handleFormatNaira(amount: number) {
   const formattedAmount = Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount || 0);
-  return formattedAmount;
+  return `₦${formattedAmount}`;
 }
 
 export function convert2base64(file: any) {

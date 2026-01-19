@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
             className="w-full justify-start"
             variant="outline"
           >
-            <Upload className="h-4 w-4 mr-2" />
+            <Upload className="h-4 " />
             Print Station
           </Button>
           <Button
@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
             className="w-full justify-start"
             variant="outline"
           >
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className="h-4 " />
             My Print Jobs
           </Button>
           <Button
@@ -73,7 +73,7 @@ const Dashboard: React.FC = () => {
             className="w-full justify-start"
             variant="outline"
           >
-            <CreditCard className="h-4 w-4 mr-2" />
+            <CreditCard className="h-4 " />
             Manage Wallet
           </Button>
         </div>

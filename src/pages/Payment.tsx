@@ -250,7 +250,7 @@ const Payment: React.FC = () => {
                       variant="outline"
                       className="flex-1"
                     >
-                      <Copy className="h-4 w-4 mr-2" />
+                      <Copy className="h-4 " />
                       Copy Code
                     </Button>
 
