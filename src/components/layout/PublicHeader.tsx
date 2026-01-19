@@ -27,7 +27,7 @@ const Header: React.FC = () => {
             <Button
               variant="ghost"
               onClick={() => navigate("/")}
-              className="text-xl px-0 font-bold text-gray-900 hover:text-black"
+              className="text-xl "
             >
               PrintLoop
             </Button>
@@ -38,7 +38,6 @@ const Header: React.FC = () => {
             <Button
               variant="ghost"
               onClick={() => navigate("/")}
-              className="text-gray-600 hover:text-gray-900"
             >
               <Home className="h-4 " />
               Print Station
@@ -48,14 +47,12 @@ const Header: React.FC = () => {
                 <Button
                   variant="ghost"
                   onClick={() => navigate(ROUTES.APP.PRINT_JOBS)}
-                  className="text-gray-600 hover:text-gray-900"
                 >
                   My Print Jobs
                 </Button>
                 <Button
                   variant="ghost"
                   onClick={() => navigate(ROUTES.APP.WALLET)}
-                  className="text-gray-600 hover:text-gray-900"
                 >
                   <Wallet className="h-4 " />
                   Wallet
@@ -75,7 +72,7 @@ const Header: React.FC = () => {
                   <User className="h-4 " />
                   Dashboard
                 </Button>
-                <Button onClick={handleLogout} variant="outline" size="sm">
+                <Button onClick={handleLogout} variant="outline">
                   <LogOut className="h-4 " />
                   Logout
                 </Button>

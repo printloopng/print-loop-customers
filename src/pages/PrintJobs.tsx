@@ -251,12 +251,11 @@ const PrintJobs: React.FC = () => {
                       job.status === PRINT_STATUS.PROCESSING) && (
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="destructive"
                           onClick={() => handleCancelJob(job.id)}
                           disabled={isCancelling}
-                          className="text-red-600 hover:text-red-700"
                         >
-                          <X className="h-3 w-3 mr-1" />
+                          <X className="h-3 w-3" />
                           {isCancelling ? "Cancelling..." : "Cancel"}
                         </Button>
                       )}

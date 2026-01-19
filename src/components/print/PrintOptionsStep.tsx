@@ -78,9 +78,9 @@ export const PrintOptionsStep: React.FC<PrintOptionsStepProps> = ({
   const maxCopies = printOptions?.maxCopies || 100;
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
       <ReusableCard title="Basic Settings">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="paperSize">Paper Size</Label>
             <Select
@@ -166,7 +166,7 @@ export const PrintOptionsStep: React.FC<PrintOptionsStepProps> = ({
       </ReusableCard>
 
       <ReusableCard title="Advanced Settings">
-        <div className="space-y-6">
+        <div className="flex flex-col gap-4">
           <div className="space-y-2">
             <Label>Page Range</Label>
             <RadioGroup
@@ -219,10 +219,10 @@ export const PrintOptionsStep: React.FC<PrintOptionsStepProps> = ({
                 options.duplex === DUPLEX.SINGLE_SIDED
                   ? "single_sided"
                   : options.duplex === DUPLEX.DOUBLE_SIDED_LONG_EDGE
-                  ? "double_sided_long_edge"
-                  : options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE
-                  ? "double_sided_short_edge"
-                  : "single_sided"
+                    ? "double_sided_long_edge"
+                    : options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE
+                      ? "double_sided_short_edge"
+                      : "single_sided"
               }
               onValueChange={(value) =>
                 onOptionsChange({
@@ -230,10 +230,10 @@ export const PrintOptionsStep: React.FC<PrintOptionsStepProps> = ({
                     value === "single_sided"
                       ? DUPLEX.SINGLE_SIDED
                       : value === "double_sided_long_edge"
-                      ? DUPLEX.DOUBLE_SIDED_LONG_EDGE
-                      : value === "double_sided_short_edge"
-                      ? DUPLEX.DOUBLE_SIDED_SHORT_EDGE
-                      : DUPLEX.SINGLE_SIDED
+                        ? DUPLEX.DOUBLE_SIDED_LONG_EDGE
+                        : value === "double_sided_short_edge"
+                          ? DUPLEX.DOUBLE_SIDED_SHORT_EDGE
+                          : DUPLEX.SINGLE_SIDED
                 })
               }
             >
@@ -258,6 +258,6 @@ export const PrintOptionsStep: React.FC<PrintOptionsStepProps> = ({
           </div>
         </div>
       </ReusableCard>
-    </>
+    </div>
   );
 };

@@ -51,7 +51,7 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({
   };
   return (
     <ReusableCard title="Document Details">
-      <div className="space-y-6">
+      <div className="flex flex-col gap-4">
         {/* File Info */}
         <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
           <div className="text-4xl">{getFileTypeIcon()}</div>

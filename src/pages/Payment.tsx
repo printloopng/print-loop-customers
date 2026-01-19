@@ -163,8 +163,8 @@ const Payment: React.FC = () => {
   if (isLoadingPayment || isLoadingPrintJob || isLoadingWallet) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex flex-col items-center justify-center py-20">
+        <div className="mx-auto px-4">
+          <div className="flex flex-col items-center justify-center py-4">
             <Loader2 className="h-12 w-12 text-blue-500 animate-spin mb-4" />
             <p className="text-gray-600">Loading payment details...</p>
           </div>
@@ -176,7 +176,7 @@ const Payment: React.FC = () => {
   if (!paymentId || !payment) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="mx-auto px-4">
           <ReusableCard title="Error" className="text-center">
             <div className="py-8">
               <p className="text-gray-600 mb-4">
@@ -195,7 +195,7 @@ const Payment: React.FC = () => {
   if (!printJobId || !printJob) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="mx-auto px-4">
           <ReusableCard title="Error" className="text-center">
             <div className="py-8">
               <p className="text-gray-600 mb-4">
@@ -294,15 +294,15 @@ const Payment: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="mb-8">
+      <div className="mx-auto px-4">
+        <div className="mb-4">
           <h1 className="text-3xl font-bold text-gray-900">Payment</h1>
           <p className="text-gray-600 mt-2">
             Complete your payment to start printing
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Payment Methods */}
           <div className="lg:col-span-2">
             <ReusableCard title="Select Payment Method">
@@ -376,7 +376,7 @@ const Payment: React.FC = () => {
           </div>
 
           {/* Order Summary */}
-          <div className="space-y-6">
+          <div className="flex flex-col gap-4">
             <ReusableCard title="Order Summary">
               <div className="space-y-4">
                 <div className="flex justify-between">

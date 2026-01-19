@@ -339,8 +339,8 @@ const PrintFlow: React.FC = () => {
 
       case 2:
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 flex flex-col gap-4">
               <PrintOptionsStep
                 options={options}
                 customPageRange={customPageRange}
@@ -349,7 +349,7 @@ const PrintFlow: React.FC = () => {
                 onCustomPageRangeChange={setCustomPageRange}
               />
             </div>
-            <div className="space-y-6">
+            <div className="flex flex-col gap-4">
               <OrderSummary
                 printConfig={{
                   paperSize: options.paperSize,
@@ -369,7 +369,7 @@ const PrintFlow: React.FC = () => {
 
       case 3:
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
             <div className="lg:col-span-3">
               <PreviewStep
                 fileName={completedFiles[0]?.file?.name || "document.pdf"}
@@ -386,7 +386,7 @@ const PrintFlow: React.FC = () => {
                 onNextPage={() => { }}
               />
             </div>
-            <div className="space-y-6">
+            <div className="flex flex-col gap-4 lg:col-span-3" >
               <PrintSummary
                 fileName={completedFiles[0]?.file?.name || "document.pdf"}
                 fileSize={formatFileSize(completedFiles[0]?.size || 0)}
@@ -405,7 +405,7 @@ const PrintFlow: React.FC = () => {
 
   return (
     <div className="py-8">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className=" mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Print Station</h1>
           <p className="text-gray-600 mt-2">
@@ -413,11 +413,11 @@ const PrintFlow: React.FC = () => {
           </p>
         </div>
 
-        <div className="mb-8">
+        <div className="mb-4">
           <Stepper steps={steps} currentStep={currentStep} />
         </div>
 
-        <div className="mb-8">{renderStepContent()}</div>
+        <div className="mb-4">{renderStepContent()}</div>
 
         <div className="flex justify-between items-center">
           <Button
