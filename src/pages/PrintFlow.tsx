@@ -40,7 +40,7 @@ interface PrintOptions {
   duplex: DUPLEX;
 }
 
-const PrintFlowPage: React.FC = () => {
+const PrintFlow: React.FC = () => {
   const navigate = useNavigate();
   const { accessToken } = useAppSelector((state) => state.auth);
 
@@ -179,10 +179,10 @@ const PrintFlowPage: React.FC = () => {
         (options.duplex === DUPLEX.SINGLE_SIDED
           ? "single_sided"
           : options.duplex === DUPLEX.DOUBLE_SIDED_LONG_EDGE
-          ? "double_sided_long_edge"
-          : options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE
-          ? "double_sided_short_edge"
-          : "single_sided")
+            ? "double_sided_long_edge"
+            : options.duplex === DUPLEX.DOUBLE_SIDED_SHORT_EDGE
+              ? "double_sided_short_edge"
+              : "single_sided")
     );
 
     const staplingService = printOptions.additionalServices?.find(
@@ -264,7 +264,15 @@ const PrintFlowPage: React.FC = () => {
       }).unwrap();
 
       toast.success("Print job created successfully!");
-      navigate(ROUTES.APP.PAYMENT, { state: { printJobId: printJob.id } });
+
+      // Navigate to payment detail page using paymentId from print job response
+      if (printJob.paymentId) {
+        navigate(ROUTES.APP.PAYMENT(printJob.paymentId));
+      } else {
+        // Fallback: navigate to payments list if paymentId is not available
+        toast.error("Payment ID not found in print job response");
+        navigate(ROUTES.APP.PAYMENTS);
+      }
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to create print job");
     } finally {
@@ -424,4 +432,4 @@ const PrintFlowPage: React.FC = () => {
   );
 };
 
-export default PrintFlowPage;
+export default PrintFlow;

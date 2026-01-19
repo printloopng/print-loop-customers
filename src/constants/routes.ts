@@ -1,5 +1,4 @@
 export const ROUTES = {
-  // Auth routes
   AUTH: {
     LOGIN: "/auth/login",
     REGISTER: "/auth/register",
@@ -9,7 +8,8 @@ export const ROUTES = {
   APP: {
     DASHBOARD: "/dashboard",
     PREVIEW: "/preview",
-    PAYMENT: "/payment",
+    PAYMENTS: "/payments",
+    PAYMENT: (paymentId: string) => `/payments/${paymentId}`,
     WALLET: "/wallet",
     PRINT_JOBS: "/print-jobs",
   },

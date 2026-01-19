@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ReusableCard from "@/components/ui/cards";
@@ -8,9 +9,11 @@ import {
   ZoomIn,
   ZoomOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import { PAPER_SIZE, ORIENTATION } from "@/types/printJob";
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface PreviewStepProps {
   fileName: string;
@@ -41,6 +44,60 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({
   onPreviousPage,
   onNextPage
 }) => {
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageNumber, setPageNumber] = useState(currentPage);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPageNumber(currentPage);
+  }, [currentPage]);
+
+  const getPdfData = () => {
+    if (!fileBase64) return null;
+    if (fileBase64.startsWith("data:")) {
+      return fileBase64;
+    }
+    return `data:application/pdf;base64,${fileBase64}`;
+  };
+
+  useEffect(() => {
+    if (fileType === "application/pdf" && fileBase64) {
+      setLoading(true);
+      setError(null);
+    }
+  }, [fileBase64, fileType]);
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    setLoading(false);
+    setError(null);
+  };
+
+  const onDocumentLoadError = (error: Error) => {
+    setError(error.message || "Failed to load PDF");
+    setLoading(false);
+  };
+
+  const handlePreviousPage = () => {
+    if (pageNumber > 1) {
+      const newPage = pageNumber - 1;
+      setPageNumber(newPage);
+      onPreviousPage();
+    }
+  };
+
+  const handleNextPage = () => {
+    const maxPages = numPages || totalPages;
+    if (pageNumber < maxPages) {
+      const newPage = pageNumber + 1;
+      setPageNumber(newPage);
+      onNextPage();
+    }
+  };
+
+  const displayTotalPages = numPages || totalPages;
+  const displayCurrentPage = pageNumber;
   return (
     <ReusableCard title="Document Preview">
       <div className="space-y-4">
@@ -49,7 +106,19 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-gray-500" />
               <span className="font-medium">{fileName}</span>
-              <Badge variant="outline">PDF</Badge>
+              <Badge variant="outline">
+                {fileType === "application/pdf"
+                  ? "PDF"
+                  : fileType.startsWith("image/")
+                    ? "IMAGE"
+                    : fileType.includes("word") || fileType.includes("document")
+                      ? "DOC"
+                      : fileType.includes("spreadsheet") || fileType.includes("excel")
+                        ? "XLS"
+                        : fileType.includes("presentation") || fileType.includes("powerpoint")
+                          ? "PPT"
+                          : "FILE"}
+              </Badge>
             </div>
           </div>
 
@@ -85,28 +154,79 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({
               {fileType.startsWith("image/") ? (
                 <div className="max-w-full max-h-[500px] overflow-auto">
                   <img
-                    src={`data:${fileType};base64,${fileBase64}`}
+                    src={
+                      fileBase64.startsWith("data:")
+                        ? fileBase64
+                        : `data:${fileType};base64,${fileBase64}`
+                    }
                     alt={fileName}
                     className="max-w-full max-h-full object-contain"
                     style={{ transform: `scale(${zoom / 100})` }}
                   />
                 </div>
               ) : fileType === "application/pdf" ? (
-                <div className="text-center">
-                  <FileText className="h-16 w-16 text-red-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600 mb-2">PDF Preview</p>
-                  <p className="text-xs text-gray-500">
-                    Page {currentPage} of {totalPages}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {orientation} • {paperSize}
-                  </p>
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg max-w-md mx-auto">
-                    <p className="text-sm text-gray-600">
-                      PDF preview functionality can be implemented with
-                      react-pdf library
-                    </p>
-                  </div>
+                <div className="w-full flex flex-col items-center">
+                  {loading && (
+                    <div className="flex flex-col items-center gap-2 py-8">
+                      <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                      <p className="text-sm text-gray-600">Loading PDF...</p>
+                    </div>
+                  )}
+                  {error && (
+                    <div className="text-center py-8">
+                      <FileText className="h-16 w-16 text-red-400 mx-auto mb-4" />
+                      <p className="text-sm text-red-600 mb-2">
+                        Error loading PDF
+                      </p>
+                      <p className="text-xs text-gray-500">{error}</p>
+                    </div>
+                  )}
+                  {!loading && !error && getPdfData() && (
+                    <div className="w-full flex flex-col items-center overflow-auto max-h-[600px]">
+                      <Document
+                        file={getPdfData()}
+                        onLoadSuccess={onDocumentLoadSuccess}
+                        onLoadError={onDocumentLoadError}
+                        loading={
+                          <div className="flex flex-col items-center gap-2 py-8">
+                            <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                            <p className="text-sm text-gray-600">
+                              Loading PDF...
+                            </p>
+                          </div>
+                        }
+                        error={
+                          <div className="text-center py-8">
+                            <FileText className="h-16 w-16 text-red-400 mx-auto mb-4" />
+                            <p className="text-sm text-red-600 mb-2">
+                              Failed to load PDF
+                            </p>
+                          </div>
+                        }
+                      >
+                        <div
+                          className="flex justify-center"
+                          style={{
+                            transform: `scale(${zoom / 100})`,
+                            transformOrigin: "top center"
+                          }}
+                        >
+                          <Page
+                            pageNumber={pageNumber}
+                            renderTextLayer={true}
+                            renderAnnotationLayer={true}
+                            width={Math.min(800, window.innerWidth - 100)}
+                            className="shadow-lg"
+                          />
+                        </div>
+                      </Document>
+                      {numPages && (
+                        <div className="mt-4 text-xs text-gray-500">
+                          {orientation} • {paperSize}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : fileType.includes("word") || fileType.includes("document") ? (
                 <div className="text-center">
@@ -193,8 +313,8 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
-            onClick={onPreviousPage}
-            disabled={currentPage === 1}
+            onClick={fileType === "application/pdf" ? handlePreviousPage : onPreviousPage}
+            disabled={displayCurrentPage === 1}
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Previous
@@ -202,14 +322,14 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({
 
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
+              Page {displayCurrentPage} of {displayTotalPages}
             </span>
           </div>
 
           <Button
             variant="outline"
-            onClick={onNextPage}
-            disabled={currentPage === totalPages}
+            onClick={fileType === "application/pdf" ? handleNextPage : onNextPage}
+            disabled={displayCurrentPage >= displayTotalPages}
           >
             Next
             <ChevronRight className="h-4 w-4 ml-1" />

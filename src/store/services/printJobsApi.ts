@@ -13,7 +13,6 @@ import { apiSlice } from "./apiSlice";
 
 export const printJobsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // Upload file for printing
     uploadPrintFile: builder.mutation<
       UploadFileResponse,
       { fileBase64: string; fileName: string; fileType: string }
@@ -28,7 +27,6 @@ export const printJobsApi = apiSlice.injectEndpoints({
       }
     }),
 
-    // Get print options
     getPrintOptions: builder.query<PrintOptions, void>({
       query: () => ({
         url: API_ROUTES.PRINT_JOBS.OPTIONS,
@@ -39,7 +37,6 @@ export const printJobsApi = apiSlice.injectEndpoints({
       }
     }),
 
-    // Get print job statistics
     getPrintJobStats: builder.query<
       PrintJobStats,
       { startDate?: string; endDate?: string }
@@ -55,15 +52,14 @@ export const printJobsApi = apiSlice.injectEndpoints({
       providesTags: [{ type: RTK_TAGS.PRINT_JOBS, id: "STATS" }]
     }),
 
-    // Create print job
     createPrintJob: builder.mutation<PrintJob, CreatePrintJobRequest>({
       query: (printJobData) => ({
         url: API_ROUTES.PRINT_JOBS.CREATE,
         method: "POST",
         body: printJobData
       }),
-      transformResponse: (response: ServiceResponse<PrintJob>) => {
-        return response?.response || response;
+      transformResponse: (response: any) => {
+        return response?.data || response?.response || response;
       },
       invalidatesTags: [
         { type: RTK_TAGS.PRINT_JOBS, id: "LIST" },
@@ -71,7 +67,6 @@ export const printJobsApi = apiSlice.injectEndpoints({
       ]
     }),
 
-    // Get user print jobs (paginated)
     getUserPrintJobs: builder.query<
       PaginatedResponse<PrintJob>,
       PrintJobQueryParams
@@ -82,26 +77,41 @@ export const printJobsApi = apiSlice.injectEndpoints({
         params
       }),
       transformResponse: (response: any) => {
+        // Handle response structure: { success, message, data, meta }
+        if (response?.data && response?.meta) {
+          return {
+            data: response.data,
+            meta: {
+              total: response.meta.total || 0,
+              page: typeof response.meta.page === 'string'
+                ? parseInt(response.meta.page, 10)
+                : response.meta.page || 1,
+              limit: typeof response.meta.limit === 'string'
+                ? parseInt(response.meta.limit, 10)
+                : response.meta.limit || 10,
+              totalPages: response.meta.totalPages || 1
+            }
+          };
+        }
+        // Fallback to old structure
         return response?.response || response;
       },
       providesTags: () => [{ type: RTK_TAGS.PRINT_JOBS, id: "LIST" }]
     }),
 
-    // Get print job by ID
     getPrintJobById: builder.query<PrintJob, string>({
       query: (jobId) => ({
         url: API_ROUTES.PRINT_JOBS.DETAIL(jobId),
         method: "GET"
       }),
-      transformResponse: (response: ServiceResponse<PrintJob>) => {
-        return response?.response || response;
+      transformResponse: (response: any) => {
+        return response?.data || response?.response || response;
       },
       providesTags: (_result, _error, jobId) => [
         { type: RTK_TAGS.PRINT_JOBS, id: jobId }
       ]
     }),
 
-    // Cancel print job
     cancelPrintJob: builder.mutation<
       PrintJob,
       { jobId: string; data: CancelPrintJobRequest }
@@ -111,8 +121,8 @@ export const printJobsApi = apiSlice.injectEndpoints({
         method: "PATCH",
         body: data
       }),
-      transformResponse: (response: ServiceResponse<PrintJob>) => {
-        return response?.response || response;
+      transformResponse: (response: any) => {
+        return response?.data || response?.response || response;
       },
       invalidatesTags: (_result, _error, { jobId }) => [
         { type: RTK_TAGS.PRINT_JOBS, id: jobId },
@@ -121,7 +131,6 @@ export const printJobsApi = apiSlice.injectEndpoints({
       ]
     }),
 
-    // Delete print job
     deletePrintJob: builder.mutation<void, string>({
       query: (jobId) => ({
         url: API_ROUTES.PRINT_JOBS.DELETE(jobId),

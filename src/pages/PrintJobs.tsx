@@ -21,7 +21,7 @@ import {
 } from "@/store/services/printJobsApi";
 import { PRINT_STATUS } from "@/types/printJob";
 
-const PrintJobsPage: React.FC = () => {
+const PrintJobs: React.FC = () => {
   const [page] = useState(1);
   const [statusFilter] = useState<PRINT_STATUS | undefined>();
 
@@ -136,19 +136,17 @@ const PrintJobsPage: React.FC = () => {
           </ReusableCard>
         ) : (
           jobs.map((job) => (
-            <ReusableCard key={job.id} title={`Job #${job.id}`}>
+            <ReusableCard key={job.id} title={`Job #${job.jobNumber}`}>
               <div className="space-y-4">
                 {/* Job Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-gray-500" />
                     <div>
-                      <p className="font-medium">{job.fileName}</p>
-                      <p className="text-sm text-gray-500">
-                        {job.totalPages
-                          ? `${job.totalPages} pages`
-                          : "Processing..."}
+                      <p className="font-medium">
+                        {job.jobNumber || "Untitled Document"}
                       </p>
+
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -177,7 +175,9 @@ const PrintJobsPage: React.FC = () => {
                     <p className="text-gray-500">Price</p>
                     <p className="font-medium">
                       {handleFormatNaira(
-                        job.estimatedCost || job.actualCost || 0
+                        parseFloat(job.estimatedCost?.toString() || "0") ||
+                        parseFloat(job.actualCost?.toString() || "0") ||
+                        0
                       )}
                     </p>
                   </div>
@@ -241,17 +241,17 @@ const PrintJobsPage: React.FC = () => {
                     )}
                     {(job.status === PRINT_STATUS.PENDING ||
                       job.status === PRINT_STATUS.PROCESSING) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCancelJob(job.id)}
-                        disabled={isCancelling}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <X className="h-3 w-3 mr-1" />
-                        {isCancelling ? "Cancelling..." : "Cancel"}
-                      </Button>
-                    )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelJob(job.id)}
+                          disabled={isCancelling}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          {isCancelling ? "Cancelling..." : "Cancel"}
+                        </Button>
+                      )}
                     {job.status === PRINT_STATUS.CANCELLED && (
                       <Button
                         size="sm"
@@ -275,4 +275,4 @@ const PrintJobsPage: React.FC = () => {
   );
 };
 
-export default PrintJobsPage;
+export default PrintJobs;

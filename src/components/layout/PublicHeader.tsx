@@ -68,9 +68,6 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             {accessToken ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
-                  Welcome, {user?.lastName} {user?.firstName}
-                </span>
                 <Button
                   variant="outline"
                   onClick={() => navigate(ROUTES.APP.DASHBOARD)}

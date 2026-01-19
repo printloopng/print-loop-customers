@@ -7,9 +7,8 @@ export enum PAYMENT_STATUS {
 }
 
 export enum PAYMENT_METHOD {
-  CARD = "card",
-  BANK_TRANSFER = "bank_transfer",
   WALLET = "wallet",
+  PAYSTACK = "paystack",
 }
 
 export interface Payment {
@@ -29,22 +28,9 @@ export interface Payment {
 
 export interface CreatePaymentRequest {
   amount: number;
-  method: PAYMENT_METHOD;
+  paymentMethod: PAYMENT_METHOD;
   printJobId?: string;
   description?: string;
   metadata?: Record<string, any>;
 }
 
-export interface VerifyPaymentResponse {
-  payment: Payment;
-  verified: boolean;
-  message: string;
-}
-
-export interface PaymentQueryParams {
-  page?: number;
-  limit?: number;
-  status?: PAYMENT_STATUS;
-  startDate?: string;
-  endDate?: string;
-}

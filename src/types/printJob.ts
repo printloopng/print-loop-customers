@@ -43,8 +43,8 @@ export interface PrintJob {
   resolution: number;
   duplex: DUPLEX;
   totalPages?: number;
-  estimatedCost?: number;
-  actualCost?: number;
+  estimatedCost?: number | string;
+  actualCost?: number | string;
   completedAt?: string;
   failureReason?: string;
   code?: string;
@@ -53,6 +53,7 @@ export interface PrintJob {
   fileURL: string;
   fileName: string;
   userId: string;
+  paymentId?: string;
   createdAt: string;
   updatedAt: string;
 }

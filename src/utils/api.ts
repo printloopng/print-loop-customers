@@ -1,15 +1,10 @@
-// Base API configuration
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
-// Common headers
 const getHeaders = (): Record<string, string> => ({
   'Content-Type': 'application/json',
-  // Add authorization header if needed
-  // 'Authorization': `Bearer ${getToken()}`,
 });
 
-// Generic API request function
 const apiRequest = async (
   endpoint: string,
   options: RequestInit = {}
@@ -34,7 +29,6 @@ const apiRequest = async (
   }
 };
 
-// HTTP methods
 export const api = {
   get: (endpoint: string) => apiRequest(endpoint),
 
@@ -62,7 +56,6 @@ export const api = {
     }),
 };
 
-// Example API functions
 export const userApi = {
   getUsers: () => api.get('/users'),
   getUser: (id: string | number) => api.get(`/users/${id}`),

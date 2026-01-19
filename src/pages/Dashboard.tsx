@@ -6,7 +6,7 @@ import { User, Mail, Upload, CreditCard, FileText } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useGetProfileDetailsQuery } from "@/store/services/authSlice";
 
-const DashboardPage: React.FC = () => {
+const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { data: user } = useGetProfileDetailsQuery({});
 
@@ -82,4 +82,4 @@ const DashboardPage: React.FC = () => {
   );
 };
 
-export default DashboardPage;
+export default Dashboard;

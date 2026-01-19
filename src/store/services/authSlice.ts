@@ -70,7 +70,6 @@ export const hqAuthApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // Account Management Endpoints
     updateProfile: builder.mutation<User, any>({
       query: (profileData) => ({
         url: "auth/profile",
@@ -129,7 +128,6 @@ export const hqAuthApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // Email Verification Endpoints
     verifyEmail: builder.mutation<any, { token: string; email: string }>({
       query: (body) => ({
         url: "auth/verify-email",

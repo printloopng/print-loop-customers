@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,33 +11,70 @@ import {
   Minus,
   History,
   DollarSign,
-  Wallet,
   ArrowDownLeft,
-  Clock
+  Clock,
+  WalletIcon
 } from "lucide-react";
 import {
   useFundWalletMutation,
   useGetWalletBalanceQuery,
-  useGetWalletTransactionsQuery
+  useGetWalletTransactionsQuery,
+  useLazyVerifyWalletFundingQuery
 } from "@/store/services/walletApi";
 import { TRANSACTION_TYPE } from "@/types/wallet";
 
-const WalletPage: React.FC = () => {
+const Wallet: React.FC = () => {
   const [addAmount, setAddAmount] = useState("");
   const [page] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // RTK Query hooks
-  const { data: wallet, isLoading: isLoadingBalance } =
+  const { data: wallet, isLoading: isLoadingBalance, refetch: refetchBalance } =
     useGetWalletBalanceQuery();
-  const { data: transactionsData, isLoading: isLoadingTransactions } =
+  const { data: transactionsData, isLoading: isLoadingTransactions, refetch: refetchTransactions } =
     useGetWalletTransactionsQuery({
       page,
       limit: 10
     });
   const [fundWallet, { isLoading: isFunding }] = useFundWalletMutation();
+  const [verifyWalletFunding] = useLazyVerifyWalletFundingQuery();
 
   const transactions = transactionsData?.data || [];
   const balance = wallet?.balance || 0;
+  const processedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const reference = searchParams.get("reference") || searchParams.get("trxref");
+
+    if (reference && !processedRef.current.has(reference)) {
+      processedRef.current.add(reference);
+
+      const verifyPayment = async () => {
+        try {
+          const result = await verifyWalletFunding(reference).unwrap();
+          console.log(result);
+          if (result.status === 'completed') {
+            toast.success(result.message || "Wallet funded successfully!");
+            refetchBalance();
+            refetchTransactions();
+          } else {
+            toast.error(result.message || "Payment verification failed");
+          }
+        } catch (error: any) {
+          toast.error(
+            error?.message ||
+            error?.data?.message ||
+            "Failed to verify payment. Please contact support if funds were deducted."
+          );
+        } finally {
+          searchParams.delete("reference");
+          searchParams.delete("trxref");
+          setSearchParams(searchParams, { replace: true });
+        }
+      };
+
+      verifyPayment();
+    }
+  }, [searchParams, setSearchParams, verifyWalletFunding, refetchBalance, refetchTransactions]);
 
   const handleAddFunds = async () => {
     const amount = parseFloat(addAmount);
@@ -58,20 +96,9 @@ const WalletPage: React.FC = () => {
 
       if (result.authorizationUrl) {
         window.location.href = result.authorizationUrl;
-      } else {
-        toast.success("Wallet funded successfully!");
-        setAddAmount("");
       }
-    } catch (error: any) {
-      // Handle validation errors with details
-      if (error?.details && Array.isArray(error.details)) {
-        const validationErrors = error.details
-          .map((detail: any) => detail.message)
-          .join(", ");
-        toast.error(validationErrors);
-      } else {
-        toast.error(error?.message || "Failed to fund wallet");
-      }
+    } catch {
+      console.error("Failed to fund wallet");
     }
   };
 
@@ -113,7 +140,7 @@ const WalletPage: React.FC = () => {
               {isLoadingBalance ? (
                 <Clock className="h-8 w-8 text-blue-600 animate-spin" />
               ) : (
-                <Wallet className="h-8 w-8 text-blue-600" />
+                <WalletIcon className="h-8 w-8 text-blue-600" />
               )}
             </div>
             <div>
@@ -221,8 +248,8 @@ const WalletPage: React.FC = () => {
                       transaction.status === "completed"
                         ? "bg-green-50 text-green-700 border-green-200"
                         : transaction.status === "pending"
-                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                        : "bg-red-50 text-red-700 border-red-200"
+                          ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                          : "bg-red-50 text-red-700 border-red-200"
                     }
                   >
                     {transaction.status}
@@ -269,4 +296,4 @@ const WalletPage: React.FC = () => {
   );
 };
 
-export default WalletPage;
+export default Wallet;

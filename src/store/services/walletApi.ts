@@ -2,17 +2,13 @@ import { API_ROUTES, RTK_TAGS } from "@/constants";
 import {
   Wallet,
   WalletTransaction,
-  FundWalletRequest,
-  FundWalletResponse,
-  VerifyWalletFundingResponse,
-  WalletTransactionsQueryParams
 } from "@/types/wallet";
 import { PaginatedResponse } from "@/types/statics";
 import { apiSlice } from "./apiSlice";
 
 export const walletApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    fundWallet: builder.mutation<FundWalletResponse, FundWalletRequest>({
+    fundWallet: builder.mutation<any, any>({
       query: (fundData) => ({
         url: API_ROUTES.WALLET.FUND,
         method: "POST",
@@ -27,7 +23,7 @@ export const walletApi = apiSlice.injectEndpoints({
       ]
     }),
 
-    verifyWalletFunding: builder.query<VerifyWalletFundingResponse, string>({
+    verifyWalletFunding: builder.query<any, string>({
       query: (reference) => ({
         url: API_ROUTES.WALLET.VERIFY(reference),
         method: "GET"
@@ -50,7 +46,7 @@ export const walletApi = apiSlice.injectEndpoints({
 
     getWalletTransactions: builder.query<
       PaginatedResponse<WalletTransaction>,
-      WalletTransactionsQueryParams
+      any
     >({
       query: (params) => ({
         url: API_ROUTES.WALLET.TRANSACTIONS,

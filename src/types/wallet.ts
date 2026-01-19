@@ -32,29 +32,3 @@ export interface WalletTransaction {
   createdAt: string;
   updatedAt: string;
 }
-
-export interface FundWalletRequest {
-  amount: number;
-  method?: string;
-}
-
-export interface FundWalletResponse {
-  reference: string;
-  authorizationUrl: string;
-  accessCode: string;
-}
-
-export interface VerifyWalletFundingResponse {
-  transaction: WalletTransaction;
-  verified: boolean;
-  message: string;
-}
-
-export interface WalletTransactionsQueryParams {
-  page?: number;
-  limit?: number;
-  type?: TRANSACTION_TYPE;
-  status?: TRANSACTION_STATUS;
-  startDate?: string;
-  endDate?: string;
-}
